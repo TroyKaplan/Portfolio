@@ -5,7 +5,6 @@ import HomePage from './pages/HomePage';
 import GamesPage from './pages/GamesPage';
 import ResumePage from './pages/ResumePage';
 import GalleryPage from './pages/GalleryPage';
-import gameEmbed from "./components/GameEmbed";
 import './App.css';
 
 function App() {

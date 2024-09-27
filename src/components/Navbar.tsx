@@ -6,7 +6,7 @@ const Navbar: React.FC = () => {
     return (
         <nav className="navbar" aria-label="Main navigation">
             <div className="nav-logo">
-                <NavLink to="/">[Your Logo or Name]</NavLink>
+                <NavLink to="/">Troy Kaplan</NavLink>
             </div>
             <div className="nav-links">
                 <NavLink

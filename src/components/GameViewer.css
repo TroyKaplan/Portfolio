@@ -1,0 +1,31 @@
+/* GameViewer.css */
+
+.game-viewer {
+    position: relative;
+    width: 100%;
+    max-width: 1625px; /* Adjust as needed */
+    margin: 0 auto;
+    text-align: center;
+}
+
+.close-button {
+    position: absolute;
+    top: -50px;
+    right: 0;
+    background-color: #ff3333;
+    color: #fff;
+    border: none;
+    padding: 15px 20px;
+    font-size: 18px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.close-button:hover {
+    background-color: #cc0000;
+}
+
+iframe {
+    width: 100%;
+    border: none;
+}

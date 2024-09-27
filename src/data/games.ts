@@ -20,7 +20,7 @@ const games: Game[] = [
         id: 'TopDownRogueLike',
         title: 'Top Down Rogue Like',
         description: 'A classic prototype',
-        thumbnail: '/assets/images/game2-thumbnail.jpg',
+        thumbnail: '/assets/images/TopDownRogueLikeThumbnail.png',
         path: '/assets/games/TopDownRoguelike/index.html',
     },
     // Add more games as needed

@@ -1,4 +1,5 @@
 import React from 'react';
+import './GameViewer.css'; // Import CSS for styling
 
 interface GameViewerProps {
     gamePath: string;
@@ -8,13 +9,15 @@ interface GameViewerProps {
 const GameViewer: React.FC<GameViewerProps> = ({ gamePath, onClose }) => {
     return (
         <div className="game-viewer">
-            <button onClick={onClose}>Close</button>
+            <button className="close-button" onClick={onClose}>
+                Close
+            </button>
             <iframe
                 src={gamePath}
                 title="Game"
-                width="1920"
-                height="1080"
-                frameBorder="0"
+                width="100%"
+                height="1000px"
+                //frameBorder="0"
                 allowFullScreen
             ></iframe>
         </div>
