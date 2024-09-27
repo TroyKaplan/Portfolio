@@ -1,0 +1,33 @@
+.home-page {
+    text-align: center;
+    padding: 2rem;
+}
+
+.intro {
+    margin-bottom: 3rem;
+}
+
+.navigation-links {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+}
+
+.nav-link {
+    display: block;
+    width: 200px;
+    padding: 1rem;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.3s;
+}
+
+.nav-link:hover {
+    border-color: #007bff;
+}
+
+.nav-link h2 {
+    margin-bottom: 0.5rem;
+}
