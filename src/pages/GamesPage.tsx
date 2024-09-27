@@ -17,7 +17,7 @@ const GamesPage: React.FC = () => {
 
     return (
         <div className="games-page">
-            <h1>My Games</h1>
+            <h1>Playable browser games</h1>
             {!selectedGame ? (
                 <div className="game-list">
                     {games.map((game) => (

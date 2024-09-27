@@ -1,10 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
+import GalleryItem from '../components/GalleryItem';
+import GalleryViewer from '../components/GalleryViewer';
+import galleryItems from '../data/galleryItems';
+import './GalleryPage.css';
 
 const GalleryPage: React.FC = () => {
+    const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+
+    const handleItemClick = (id: string) => {
+        setSelectedItemId(id);
+    };
+
+    const handleCloseViewer = () => {
+        setSelectedItemId(null);
+    };
+
+    const selectedItem = galleryItems.find((item) => item.id === selectedItemId);
+
     return (
         <div className="gallery-page">
             <h1>Gallery</h1>
-            {/* Implement your gallery here */}
+            {selectedItem ? (
+                <GalleryViewer item={selectedItem} onClose={handleCloseViewer} />
+            ) : (
+                <div className="gallery-grid">
+                    {galleryItems.map((item) => (
+                        <GalleryItem key={item.id} item={item} onClick={() => handleItemClick(item.id)} />
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

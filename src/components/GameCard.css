@@ -1,13 +1,11 @@
-/* GameCard.css */
-
 .game-card {
-    background-color: #f8f8f8;
-    border: 1px solid #ddd;
+    background-color: var(--card-background-color);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     overflow: hidden;
     cursor: pointer;
     text-align: center;
-    transition: transform 0.2s;
+    transition: transform 0.2s, background-color 0.2s, color 0.2s;
 }
 
 .game-card:hover {
@@ -18,7 +16,7 @@
     position: relative;
     width: 100%;
     padding-top: 56.25%; /* 16:9 Aspect Ratio */
-    background-color: #000;
+    background-color: #000; /* You can change this to var(--background-color) if needed */
 }
 
 .thumbnail-wrapper img {
@@ -34,7 +32,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: rgba(0, 128, 0, 0.7);
+    background-color: var(--play-button-background);
     border-radius: 50%;
     width: 60px;
     height: 60px;
@@ -46,4 +44,8 @@
 .play-button span {
     color: #fff;
     font-size: 30px;
+}
+
+h3 {
+    color: var(--text-color); /* Ensures the text color follows the theme */
 }

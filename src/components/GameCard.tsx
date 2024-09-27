@@ -15,10 +15,11 @@ const GameCard: React.FC<GameCardProps> = ({ title, description, thumbnail, onCl
                 <img src={thumbnail} alt={`${title} Thumbnail`} />
                 <div className="play-button">
                     {/* You can use an icon or an SVG for the play arrow */}
-                    <span>&#9658;</span> {/* Unicode character for play arrow */}
+                    <span>&#x27A4;</span> {/* Unicode character for play arrow */}
                 </div>
             </div>
             <h3>{title}</h3>
+
         </div>
     );
 };

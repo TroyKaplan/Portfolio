@@ -1,6 +1,6 @@
 .navbar {
-    background-color: #343a40;
-    color: #fff;
+    background-color: var(--nav-background-color);
+    color: var(--nav-text-color);
     padding: 0.5rem 1rem;
     display: flex;
     align-items: center;
@@ -8,13 +8,13 @@
 }
 
 .nav-logo a {
-    color: #fff;
+    color: var(--nav-text-color);
     text-decoration: none;
     font-size: 1.25rem;
 }
 
 .nav-links a {
-    color: #fff;
+    color: var(--nav-text-color);
     text-decoration: none;
     margin-left: 1rem;
 }
@@ -24,5 +24,18 @@
 }
 
 .nav-links a:hover {
-    color: #adb5bd;
+    color: var(--primary-color);
+}
+
+.theme-toggle-button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    margin-left: 1rem;
+    cursor: pointer;
+    color: inherit;
+}
+
+.theme-toggle-button:focus {
+    outline: none;
 }

@@ -11,7 +11,7 @@ export interface Game {
 const games: Game[] = [
     {
         id: 'MainQuest2',
-        title: 'Main Quest 2!',
+        title: 'Android Mobile Game',
         description: 'Android Mobile Game, Test in browser!!',
         thumbnail: '/assets/images/MainQuest2NewThumbnail.png',
         path: '/assets/games/MainQuest2/index.html',

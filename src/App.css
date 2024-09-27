@@ -1,38 +1,56 @@
-.App {
-  text-align: center;
+/* Define default theme variables */
+:root {
+  --background-color: #ffffff;
+  --text-color: #000000;
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --link-color: #007bff;
+  --nav-background-color: #343a40;
+  --nav-text-color: #ffffff;
+  --footer-background-color: #f8f9fa;
+  --footer-text-color: #212529;
+  --card-background-color: #f8f8f8;
+  --border-color: #ddd;
+  --play-button-background: rgba(0, 128, 0, 0.7);
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+/* Dark theme variables */
+[data-theme='dark'] {
+  --background-color: #121212;
+  --text-color: #e0e0e0;
+  --primary-color: #bb86fc;
+  --secondary-color: #03dac6;
+  --link-color: #bb86fc;
+  --nav-background-color: #1f1f1f;
+  --nav-text-color: #e0e0e0;
+  --footer-background-color: #1f1f1f;
+  --footer-text-color: #e0e0e0;
+  --card-background-color: #1f1f1f;
+  --border-color: #333;
+  --play-button-background: rgba(0, 128, 0, 0.7); /* Adjust if needed */
+
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+/* Apply the variables to global styles */
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+/* Links */
+a {
+  color: var(--link-color);
 }
 
-.App-link {
-  color: #61dafb;
+/* Navbar */
+.navbar {
+  background-color: var(--nav-background-color);
+  color: var(--nav-text-color);
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Footer */
+.footer {
+  background-color: var(--footer-background-color);
+  color: var(--footer-text-color);
 }

@@ -1,0 +1,56 @@
+.gallery-item {
+    position: relative;
+    cursor: pointer;
+    text-align: center;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--card-background-color);
+    transition: transform 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.gallery-item:hover {
+    transform: scale(1.05);
+}
+
+.thumbnail-container {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* Maintain 16:9 aspect ratio */
+    background-color: #000;
+}
+
+.thumbnail-container img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.3s;
+}
+
+.gallery-item:hover .overlay {
+    opacity: 1;
+}
+
+.overlay-text {
+    color: #fff;
+    font-size: 1.2rem;
+}
+
+h3 {
+    color: var(--text-color); /* Ensures the text color follows the theme */
+}
