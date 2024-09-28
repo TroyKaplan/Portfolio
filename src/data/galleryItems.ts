@@ -31,7 +31,7 @@ const galleryItems: GalleryItem[] = [
             { type: 'image', source: '/assets/images/PinkBlast2.png' },
             { type: 'video', source: '/assets/videos/FireBlastTeaser.mp4' },
         ],
-        repositoryLink: 'https://github.com/yourusername/adventure-game',
+        //repositoryLink: 'https://github.com/yourusername/adventure-game',
     },
     {
         id: 'item2',

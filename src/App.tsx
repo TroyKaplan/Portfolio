@@ -17,7 +17,7 @@ function App() {
                     <Navbar />
                     <div className="content-wrapper">
                         <Routes>
-                            <Route path="/" element={<HomePage />} />
+                            <Route path="/Portfolio" element={<HomePage />} />
                             <Route path="/games" element={<GamesPage />} />
                             <Route path="/resume" element={<ResumePage />} />
                             <Route path="/gallery" element={<GalleryPage />} />
