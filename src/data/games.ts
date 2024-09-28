@@ -23,6 +23,20 @@ const games: Game[] = [
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/TopDownRogueLikeThumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/TopDownRoguelike/index.html`,
     },
+    {
+        id: 'CoopAdventure',
+        title: 'Co-op Adventure',
+        description: 'Simple same keyboard co-op',
+        thumbnail: `${process.env.PUBLIC_URL}/assets/images/CoopAdventureThumbnail.png`,
+        path: `${process.env.PUBLIC_URL}/assets/games/CoopAdventure/index.html`,
+    },
+    {
+        id: 'CompMultiplayerUCCS',
+        title: 'Competitive Multiplayer',
+        description: 'Simple same keyboard competition',
+        thumbnail: `${process.env.PUBLIC_URL}/assets/images/CompMultiplayerUCCSThumbnail.png`,
+        path: `${process.env.PUBLIC_URL}/assets/games/CompetitiveMultiplayerUCCS/index.html`,
+    },
     //add more
 ];
 
