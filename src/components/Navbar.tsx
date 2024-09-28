@@ -9,7 +9,7 @@ const Navbar: React.FC = () => {
     return (
         <nav className="navbar" aria-label="Main navigation">
             <div className="nav-logo">
-                <NavLink to="/">Troy Kaplan</NavLink>
+                <NavLink to="/portfolio">Troy Kaplan</NavLink>
             </div>
             <div className="nav-links">
                 <NavLink to="/games" className={({ isActive }) => (isActive ? 'active' : '')}>
