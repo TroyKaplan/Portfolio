@@ -20,8 +20,8 @@ const games: Game[] = [
         id: 'TopDownRogueLike',
         title: 'Top Down Rogue Like',
         description: 'A classic prototype',
-        thumbnail: `${process.env.PUBLIC_URL}/assets/images/TopDownRogueLikeThumbnail.png`,
-        path: `${process.env.PUBLIC_URL}/assets/games/TopDownRoguelike/index.html`,
+        thumbnail: `${process.env.PUBLIC_URL}/assets/images/TopdownRoguelikeThumbnail.png`,
+        path: `${process.env.PUBLIC_URL}/assets/games/TopdownRoguelike/index.html`,
     },
     {
         id: 'CoopAdventure',
