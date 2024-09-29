@@ -52,7 +52,7 @@ const galleryItems: GalleryItem[] = [
         ],
     },
     {
-        id: 'item3',
+        id: 'item4',
         title: 'Random Collection of Game Prototypes (not started)',
         description: 'Short Prototype Videos',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/space-music-thumbnail.jpg`,
