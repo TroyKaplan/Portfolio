@@ -11,6 +11,8 @@ export interface MediaItem {
     type: 'image' | 'video' | 'audio';
     source: string; // URL or embed link
     format?: 'embed' | 'file'; // Optional field to specify video format
+    description?: string; // Optional description for each media item
+    thumbnail?: string; // Optional thumbnail for each media item
 }
 
 const galleryItems: GalleryItem[] = [
@@ -46,12 +48,48 @@ const galleryItems: GalleryItem[] = [
         description: 'All of my current work',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/WolfStudios.png`,
         media: [
-            { type: 'video', source: `${process.env.PUBLIC_URL}/assets/videos/POQuickShowcase.mp4` },
-            { type: 'image', source: `${process.env.PUBLIC_URL}/assets/images/POMaps.png` },
-            { type: 'image', source: `${process.env.PUBLIC_URL}/assets/images/PORocketLauncher.png` },
+            {
+                type: 'video',
+                source: `${process.env.PUBLIC_URL}/assets/videos/ShowcaseHUBWorld.mp4`,
+                description: 'Showcase of the HUB World',
+                thumbnail: `${process.env.PUBLIC_URL}/assets/images/WolfStudios.png`,
+            },
+            {
+                type: 'video',
+                source: `${process.env.PUBLIC_URL}/assets/videos/ShowcaseHungryBearAndSTEAM.mp4`,
+                description: 'Showcase of working steam leaderboards',
+                thumbnail: `${process.env.PUBLIC_URL}/assets/images/WolfStudios.png`,
+            },
+            {
+                type: 'video',
+                source: `${process.env.PUBLIC_URL}/assets/videos/ShowcaseHorrorGame.mp4`,
+                description: 'Showcase of a simple horror game with sequencer',
+                thumbnail: `${process.env.PUBLIC_URL}/assets/images/WolfStudios.png`,
+            },
+            {
+                type: 'video',
+                source: `${process.env.PUBLIC_URL}/assets/videos/MLAgentsVid.mp4`,
+                description: 'Showcase of a vehicles driving along a spline trained with ML models',
+                thumbnail: `${process.env.PUBLIC_URL}/assets/images/WolfStudios.png`,
+            },
+            {
+                type: 'video',
+                source: `${process.env.PUBLIC_URL}/assets/videos/ShowcaseBadBot.mp4`,
+                description: 'Showcase of a basic bot game with a boss',
+                thumbnail: `${process.env.PUBLIC_URL}/assets/images/WolfStudios.png`,
+            },
+            {
+                type: 'video',
+                source: `${process.env.PUBLIC_URL}/assets/videos/ShowcaseAndroidMobile.mp4`,
+                description: 'Showcase of a simple android game with over 30 levels.',
+                thumbnail: `${process.env.PUBLIC_URL}/assets/images/WolfStudios.png`,
+            },
+            // Add descriptions and thumbnails to other media items similarly
         ],
     },
-    {
+    // ... other gallery items
+];
+  /*  {
         id: 'item4',
         title: 'Random Collection of Game Prototypes (not started)',
         description: 'Short Prototype Videos',
@@ -67,6 +105,6 @@ const galleryItems: GalleryItem[] = [
         ],
     },
     // Add more items as needed
-];
+];*/
 
 export default galleryItems;

@@ -1,3 +1,4 @@
+/* GalleryViewer.css */
 .gallery-viewer {
     position: relative;
     padding: 20px;
@@ -32,13 +33,16 @@
 
 .media-content img,
 .media-content iframe,
-.media-content audio {
+.media-content audio,
+.media-content video {
     width: 100%;
     height: auto;
 }
 
-.media-content video {
-    max-height: 450px;
+.media-description {
+    margin-top: 10px;
+    font-size: 1rem;
+    color: #555;
 }
 
 .nav-button {
@@ -64,4 +68,27 @@
 
 .nav-button:hover {
     background-color: rgba(0,0,0,0.8);
+}
+
+.thumbnail-gallery {
+    display: flex;
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+.thumbnail-item {
+    flex: 0 0 auto;
+    margin-right: 10px;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.thumbnail-item.active {
+    border-color: #007BFF;
+}
+
+.thumbnail-item img {
+    width: 100px;
+    height: 60px;
+    object-fit: cover;
 }
