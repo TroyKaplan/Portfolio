@@ -6,6 +6,7 @@ export interface Game {
     description: string;
     thumbnail: string;
     path: string;
+    instructions: string; // New field for game instructions
 }
 
 const games: Game[] = [
@@ -15,6 +16,7 @@ const games: Game[] = [
         description: 'Android Mobile Game, Test in browser!!',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/MainQuest2NewThumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/MainQuest2/index.html`,
+        instructions: 'Use arrow keys to move. Press spacebar to jump. Collect coins and avoid obstacles.',
     },
     {
         id: 'TopDownRogueLike',
@@ -22,6 +24,7 @@ const games: Game[] = [
         description: 'A classic prototype',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/TopdownRoguelikeThumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/TopdownRoguelike/index.html`,
+        instructions: 'Use WASD to move. Left-click to attack. Explore the dungeon and defeat enemies.',
     },
     {
         id: 'CoopAdventure',
@@ -29,6 +32,7 @@ const games: Game[] = [
         description: 'Simple same keyboard co-op',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/CoopAdventureThumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/CoopAdventure/index.html`,
+        instructions: 'Use WASD to move. Left-click to attack. Explore the dungeon and defeat enemies.',
     },
     {
         id: 'CompMultiplayerUCCS',
@@ -36,6 +40,7 @@ const games: Game[] = [
         description: 'Simple same keyboard competition',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/CompMultiplayerUCCSThumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/CompetitiveMultiplayerUCCS/index.html`,
+        instructions: 'Use WASD to move. Left-click to attack. Explore the dungeon and defeat enemies.',
     },
     //add more
 ];

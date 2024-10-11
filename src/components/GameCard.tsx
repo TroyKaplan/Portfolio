@@ -19,7 +19,9 @@ const GameCard: React.FC<GameCardProps> = ({ title, description, thumbnail, onCl
                 </div>
             </div>
             <h3>{title}</h3>
-
+            <div className="description-box">
+                <p>{description}</p>
+            </div>
         </div>
     );
 };

@@ -6,6 +6,8 @@
     cursor: pointer;
     text-align: center;
     transition: transform 0.2s, background-color 0.2s, color 0.2s;
+    display: flex;
+    flex-direction: column;
 }
 
 .game-card:hover {
@@ -47,5 +49,23 @@
 }
 
 h3 {
-    color: var(--text-color); /* Ensures the text color follows the theme */
+    color: var(--text-color);
+    margin: 10px 0;
+}
+
+.description-box {
+    background-color: var(--secondary-background-color);
+    border-radius: 4px;
+    padding: 10px;
+    margin: 0 10px 10px;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.description-box p {
+    color: var(--text-color);
+    font-size: 0.9em;
+    margin: 0;
 }

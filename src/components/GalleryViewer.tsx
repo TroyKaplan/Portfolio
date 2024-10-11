@@ -13,17 +13,11 @@ const GalleryViewer: React.FC<GalleryViewerProps> = ({ item, onClose }) => {
     const mediaItems = item.media;
 
     const handlePrev = () => {
-        setCurrentIndex((prevIndex) => {
-            const newIndex = (prevIndex - 1 + mediaItems.length) % mediaItems.length;
-            return newIndex;
-        });
+        setCurrentIndex((prevIndex) => (prevIndex - 1 + mediaItems.length) % mediaItems.length);
     };
 
     const handleNext = () => {
-        setCurrentIndex((prevIndex) => {
-            const newIndex = (prevIndex + 1) % mediaItems.length;
-            return newIndex;
-        });
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % mediaItems.length);
     };
 
     const renderMedia = (media: MediaItem) => {
@@ -72,7 +66,6 @@ const GalleryViewer: React.FC<GalleryViewerProps> = ({ item, onClose }) => {
             </button>
             <div className="viewer-content">
                 <h2>{item.title}</h2>
-                <p>{item.description}</p>
                 {item.repositoryLink && (
                     <p>
                         <a href={item.repositoryLink} target="_blank" rel="noopener noreferrer">
@@ -87,15 +80,15 @@ const GalleryViewer: React.FC<GalleryViewerProps> = ({ item, onClose }) => {
                         </button>
                         <div className="media-content">
                             {renderMedia(mediaItems[currentIndex])}
-                            <div className="media-description">
-                                {mediaItems[currentIndex].description}
-                            </div>
                         </div>
                         <button className="nav-button next-button" onClick={handleNext} aria-label="Next Media">
                             &#10095;
                         </button>
                     </div>
                 )}
+                <div className="media-description">
+                    <p>{mediaItems[currentIndex].description || item.description}</p>
+                </div>
                 <div className="thumbnail-gallery">
                     {mediaItems.map((media, index) => (
                         <div

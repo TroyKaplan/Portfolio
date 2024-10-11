@@ -18,9 +18,9 @@ function App() {
                     <div className="content-wrapper">
                         <Routes>
                             <Route path="/Portfolio" element={<HomePage />} />
-                            <Route path="/games" element={<GamesPage />} />
-                            <Route path="/resume" element={<ResumePage />} />
-                            <Route path="/gallery" element={<GalleryPage />} />
+                            <Route path="/Games" element={<GamesPage />} />
+                            <Route path="/Resume" element={<ResumePage />} />
+                            <Route path="/Gallery" element={<GalleryPage />} />
                         </Routes>
                     </div>
                     <Footer />

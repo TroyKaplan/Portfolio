@@ -16,7 +16,12 @@ const GalleryItem: React.FC<GalleryItemProps> = ({ item, onClick }) => {
                     <span className="overlay-text">View Details</span>
                 </div>
             </div>
-            <h3>{item.title}</h3>
+            <div className="item-info">
+                <h3>{item.title}</h3>
+                <div className="description-box">
+                    <p>{item.description}</p>
+                </div>
+            </div>
         </div>
     );
 };

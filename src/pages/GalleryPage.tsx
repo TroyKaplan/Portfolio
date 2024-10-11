@@ -19,7 +19,7 @@ const GalleryPage: React.FC = () => {
 
     return (
         <div className="gallery-page">
-            <h1>Gallery</h1>
+            <h1 className="page-title">My Gallery</h1>
             {selectedItem ? (
                 <GalleryViewer item={selectedItem} onClose={handleCloseViewer} />
             ) : (
