@@ -87,5 +87,6 @@ h3 {
     text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-line-clamp: 3; /* Limit to 3 lines */
+    line-clamp: 3;
     -webkit-box-orient: vertical;
 }
