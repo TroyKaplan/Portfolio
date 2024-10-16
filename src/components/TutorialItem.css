@@ -1,0 +1,8 @@
+.output-box {
+    background-color: #000;
+    color: #0f0; /* Bright green text */
+    padding: 10px;
+    border-radius: 5px;
+    white-space: pre-wrap;
+    margin-top: 10px;
+}
