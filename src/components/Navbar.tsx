@@ -21,6 +21,9 @@ const Navbar: React.FC = () => {
                 <NavLink to="/gallery" className={({ isActive }) => (isActive ? 'active' : '')}>
                     Gallery
                 </NavLink>
+                <NavLink to="/tutorials" className={({ isActive }) => (isActive ? 'active' : '')}>
+                    Tutorials
+                </NavLink>
                 {/* Theme Toggle Button */}
                 <button className="theme-toggle-button" onClick={toggleTheme} aria-label="Toggle Theme">
                     {theme === 'light' ? '🌙' : '☀️'}

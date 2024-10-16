@@ -26,6 +26,10 @@ const HomePage: React.FC = () => {
                     <h2>Gallery</h2>
                     <p>Browse through images, videos, and music created by me.</p>
                 </Link>
+                <Link to="/tutorials" className="nav-link">
+                    <h2>Tutorials</h2>
+                    <p>Explore tutorials on C++ and Unreal Engine.</p>
+                </Link>
             </section>
         </div>
     );

@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage';
 import GamesPage from './pages/GamesPage';
 import ResumePage from './pages/ResumePage';
 import GalleryPage from './pages/GalleryPage';
+import TutorialsPage from './pages/TutorialsPage';
 import './App.css';
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
                             <Route path="/Games" element={<GamesPage />} />
                             <Route path="/Resume" element={<ResumePage />} />
                             <Route path="/Gallery" element={<GalleryPage />} />
+                            <Route path="/Tutorials" element={<TutorialsPage />} />
                         </Routes>
                     </div>
                     <Footer />
