@@ -11,15 +11,18 @@ const tutorials: Tutorial[] = [
     {
         id: 'cpp-hello-world',
         title: 'Hello World in C++',
-        content: `#include <iostream>
+        content: 
+`#include <iostream>
 
 int main() {
     std::cout << "Hello, World!" << std::endl;
     return 0;
-}`,
+}
+`,
         section: 'cpp',
         type: 'code',
     },
+    //copy and paste this for more tutorials
     {
         id: 'unreal-blueprint-example',
         title: 'Blueprint Example',

@@ -23,7 +23,7 @@ app.post('/run-code', async (req, res) => {
         });
         res.json({ output: response.data.output });
     } catch (error) {
-        res.status(500).json({ output: 'Error executing code.' });
+        res.status(500).json({ output: 'Error executing code. Server Not Enabled.' });
     }
 });
 

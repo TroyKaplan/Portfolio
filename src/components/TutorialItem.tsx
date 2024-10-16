@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import axios from 'axios';
 import { Tutorial } from '../data/tutorials';
@@ -11,6 +11,13 @@ interface TutorialItemProps {
 const TutorialItem: React.FC<TutorialItemProps> = ({ tutorial }) => {
     const [code, setCode] = useState(tutorial.content);
     const [output, setOutput] = useState('');
+    const [editorHeight, setEditorHeight] = useState('400px');
+
+    useEffect(() => {
+        const lineCount = code.split('\n').length;
+        const height = Math.min(Math.max(lineCount, 3), 21) * 20; // 20px per line
+        setEditorHeight(`${height}px`);
+    }, [code]);
 
     const runCode = async () => {
         try {
@@ -27,14 +34,18 @@ const TutorialItem: React.FC<TutorialItemProps> = ({ tutorial }) => {
             {tutorial.type === 'code' && tutorial.section === 'cpp' && (
                 <>
                     <Editor
-                        height="400px"
+                        height={editorHeight}
                         defaultLanguage="cpp"
-                        theme="vs-dark" // Black background for the editor
+                        theme="vs-dark"
                         value={code}
                         onChange={(value) => setCode(value || '')}
                         options={{
                             fontSize: 14,
                             minimap: { enabled: false },
+                            scrollBeyondLastLine: false,
+                            scrollbar: {
+                                alwaysConsumeMouseWheel: false
+                            }
                         }}
                     />
                     <button onClick={runCode}>Run</button>

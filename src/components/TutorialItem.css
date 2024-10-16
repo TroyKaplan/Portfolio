@@ -1,8 +1,21 @@
 .output-box {
     background-color: #000;
-    color: #0f0; /* Bright green text */
+    color: #0f0;
     padding: 10px;
     border-radius: 5px;
     white-space: pre-wrap;
     margin-top: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.tutorial-item {
+    max-width: 800px; /* Adjust this value as needed */
+    margin: 0 auto;
+    padding: 20px;
+}
+.tutorials-page {
+    padding: 20px;
+    max-width: 1000px; /* Slightly wider than tutorial items */
+    margin: 0 auto;
 }
