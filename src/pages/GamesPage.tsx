@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import GameCard from '../components/GameCard';
 import GameViewer from '../components/GameViewer';
-import games from '../data/games';
+import gamesData, { Game } from '../data/games';
 import './GamesPage.css'; // Import CSS file for styling
 
 const GamesPage: React.FC = () => {
     const [selectedGame, setSelectedGame] = useState<string | null>(null);
     const [gamemakerExpanded, setGamemakerExpanded] = useState(true);
     const [xExpanded, setXExpanded] = useState(true);
+    const [godotExpanded, setGodotExpanded] = useState(true);
 
     const handleGameClick = (gameId: string) => {
         setSelectedGame(gameId);
@@ -21,11 +22,17 @@ const GamesPage: React.FC = () => {
         setGamemakerExpanded(!gamemakerExpanded);
     };
 
+    const toggleGodotSection = () => {
+        setGodotExpanded(!godotExpanded);
+    };
+
     const toggleXSection = () => {
         setXExpanded(!xExpanded);
     };
 
-    const selectedGameData = games.find((game) => game.id === selectedGame);
+    const allGames = [...gamesData.gameMakerGames, ...gamesData.godotGames];
+    const selectedGameData = allGames.find((game) => game.id === selectedGame);
+
 
     return (
         <div className="games-page">
@@ -46,7 +53,7 @@ const GamesPage: React.FC = () => {
                         </h2>
                         {gamemakerExpanded && (
                             <div className="game-list">
-                                {games.map((game) => (
+                                {gamesData.gameMakerGames.map((game: Game) => (
                                     <GameCard
                                         key={game.id}
                                         title={game.title}
@@ -59,12 +66,20 @@ const GamesPage: React.FC = () => {
                         )}
                     </div>
                     <div className="game-section">
-                        <h2 onClick={toggleXSection} className="section-title">
-                            Made with Unreal Engine {xExpanded ? '▼' : '▶'}
+                        <h2 onClick={toggleGodotSection} className="section-title">
+                            Made With Godot {godotExpanded ? '▼' : '▶'}
                         </h2>
-                        {xExpanded && (
+                        {godotExpanded && (
                             <div className="game-list">
-                                <p>No games available in this category yet.</p>
+                                {gamesData.godotGames.map((game: Game) => (
+                                    <GameCard
+                                        key={game.id}
+                                        title={game.title}
+                                        description={game.description}
+                                        thumbnail={game.thumbnail}
+                                        onClick={() => handleGameClick(game.id)}
+                                    />
+                                ))}
                             </div>
                         )}
                     </div>

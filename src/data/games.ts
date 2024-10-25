@@ -9,7 +9,7 @@ export interface Game {
     instructions: string; // New field for game instructions
 }
 
-const games: Game[] = [
+const gameMakerGames: Game[] = [
     {
         id: 'MainQuest2',
         title: 'Android Mobile Game',
@@ -44,5 +44,16 @@ const games: Game[] = [
     },
     //add more
 ];
+const godotGames: Game[] = [
+    {
+        id: 'First Game',
+        title: 'MP Dedicated Server',
+        description: 'Browser based multiplayer game, runs on a dedicated server through ec2 instance.',
+        thumbnail: `${process.env.PUBLIC_URL}/assets/images/BasicSmoke.png`,
+        path: `${process.env.PUBLIC_URL}/assets/games/FirstGameGodot/First Game.html`,
+        instructions: 'Use arrow keys to move. Press spacebar to jump. Collect coins and avoid obstacles.',
+    },
+    //add more
+];
 
-export default games;
+export default { gameMakerGames, godotGames };
