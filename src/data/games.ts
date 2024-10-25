@@ -51,7 +51,7 @@ const godotGames: Game[] = [
         description: 'Browser based multiplayer game, runs on a dedicated server through ec2 instance.',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/BasicSmoke.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/FirstGameGodot/First Game.html`,
-        instructions: 'Use arrow keys to move. Press spacebar to jump. Collect coins and avoid obstacles.',
+        instructions: 'Use arrow keys to move. Press spacebar to jump. Collect coins and play with friends.',
     },
     //add more
 ];
