@@ -7,7 +7,6 @@ import './GamesPage.css'; // Import CSS file for styling
 const GamesPage: React.FC = () => {
     const [selectedGame, setSelectedGame] = useState<string | null>(null);
     const [gamemakerExpanded, setGamemakerExpanded] = useState(true);
-    const [xExpanded, setXExpanded] = useState(true);
     const [godotExpanded, setGodotExpanded] = useState(true);
 
     const handleGameClick = (gameId: string) => {
@@ -24,10 +23,6 @@ const GamesPage: React.FC = () => {
 
     const toggleGodotSection = () => {
         setGodotExpanded(!godotExpanded);
-    };
-
-    const toggleXSection = () => {
-        setXExpanded(!xExpanded);
     };
 
     const allGames = [...gamesData.gameMakerGames, ...gamesData.godotGames];
