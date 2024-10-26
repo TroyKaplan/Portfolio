@@ -50,19 +50,19 @@ const galleryItems: GalleryItem[] = [
         media: [
             {
                 type: 'video',
-                source: `${process.env.PUBLIC_URL}/assets/videos/ShowcaseHUBWorld.mp4`,
-                description: 'Showcase of the HUB World',
-                thumbnail: `${process.env.PUBLIC_URL}/assets/images/WolfStudios.png`,
-            },
-            {
-                type: 'video',
-                source: `${process.env.PUBLIC_URL}/assets/videos/ShowcaseHungryBearAndSTEAM.mp4`,
+                source: `${process.env.PUBLIC_URL}/assets/videos/Showcase_HungryBearAndSTEAM.mp4`,
                 description: 'Showcase of working steam leaderboards',
                 thumbnail: `${process.env.PUBLIC_URL}/assets/images/WolfStudios.png`,
             },
             {
                 type: 'video',
-                source: `${process.env.PUBLIC_URL}/assets/videos/ShowcaseHorrorGame.mp4`,
+                source: `${process.env.PUBLIC_URL}/assets/videos/Showcase_HUBWorld.mp4`,
+                description: 'Showcase of the HUB World',
+                thumbnail: `${process.env.PUBLIC_URL}/assets/images/WolfStudios.png`,
+            },
+            {
+                type: 'video',
+                source: `${process.env.PUBLIC_URL}/assets/videos/Showcase_HorrorGame.mp4`,
                 description: 'Showcase of a simple horror game with sequencer',
                 thumbnail: `${process.env.PUBLIC_URL}/assets/images/WolfStudios.png`,
             },
@@ -74,13 +74,13 @@ const galleryItems: GalleryItem[] = [
             },
             {
                 type: 'video',
-                source: `${process.env.PUBLIC_URL}/assets/videos/ShowcaseBadBot.mp4`,
+                source: `${process.env.PUBLIC_URL}/assets/videos/Showcase_BadBot.mp4`,
                 description: 'Showcase of a basic bot game with a boss',
                 thumbnail: `${process.env.PUBLIC_URL}/assets/images/WolfStudios.png`,
             },
             {
                 type: 'video',
-                source: `${process.env.PUBLIC_URL}/assets/videos/ShowcaseAndroidMobile.mp4`,
+                source: `${process.env.PUBLIC_URL}/assets/videos/Showcase_AndroidMobile.mp4`,
                 description: 'Showcase of a simple android game with over 30 levels.',
                 thumbnail: `${process.env.PUBLIC_URL}/assets/images/WolfStudios.png`,
             },
