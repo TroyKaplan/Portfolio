@@ -21,10 +21,10 @@ const TutorialItem: React.FC<TutorialItemProps> = ({ tutorial }) => {
 
     const runCode = async () => {
         try {
-            const response = await axios.post('http://localhost:5000/run-code', { code });
+            const response = await axios.post('/run-code', { code });
             setOutput(response.data.output);
         } catch (error) {
-            setOutput('Error executing code.');
+            setOutput('Error executing code. From runCode function inside TutorialItem.tsx: ' + process.env.CLIENT_ID);
         }
     };
 

@@ -8,7 +8,15 @@ require('dotenv').config();
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+
+// Update CORS configuration
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? 'https://seahorse-app-thp9i.ondigitalocean.app' 
+    : 'http://localhost:3000',
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, 'build')));
