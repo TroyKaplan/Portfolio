@@ -46,20 +46,28 @@ const gameMakerGames: Game[] = [
 ];
 const godotGames: Game[] = [
     {
-        id: 'First Game',
-        title: 'MP Dedicated Server',
-        description: 'Browser based multiplayer game, runs on a dedicated server through ec2 instance.',
+        id: 'SurviveIO',
+        title: 'MP Dedicated Server Survivo IO',
+        description: 'server runs through ec2 instance.',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/BasicSmoke.png`,
-        path: `${process.env.PUBLIC_URL}/assets/games/FirstGameGodot/First Game.html`,
+        path: `${process.env.PUBLIC_URL}/assets/games/SurviveIOGodot/index.html`,
         instructions: 'Use arrow keys to move. Press spacebar to jump. Collect coins and play with friends.',
     },
     {
-        id: 'First Game',
+        id: 'Pong',
         title: 'Pong',
         description: 'Basic Pong Game',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/BasicSmoke.png`,
-        path: `${process.env.PUBLIC_URL}/assets/games/PongHTML5Godot/pong.html`,
+        path: `${process.env.PUBLIC_URL}/assets/games/PongGodot/index.html`,
         instructions: 'Use arrow keys to move right paddle. W and S to move paddle up and down.',
+    },
+    {
+        id: 'JRPG',
+        title: 'JRPG',
+        description: 'Testing Different Godot Build Settings',
+        thumbnail: `${process.env.PUBLIC_URL}/assets/images/BasicSmoke.png`,
+        path: `${process.env.PUBLIC_URL}/assets/games/JRPGGodot/index.html`,
+        instructions: 'IDK yet',
     },
     //add more
 ];
