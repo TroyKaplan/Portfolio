@@ -30,18 +30,23 @@ const GamesPage: React.FC = () => {
         setMultiplayerExpanded(!multiplayerExpanded);
     };
 
-    const allGames = [...gamesData.gameMakerGames, ...gamesData.godotGames];
+    // Include all game types in the allGames array
+    const allGames = [
+        ...gamesData.gameMakerGames,
+        ...gamesData.godotGames,
+        ...gamesData.multiplayerGames
+    ];
+    
     const selectedGameData = allGames.find((game) => game.id === selectedGame);
-
 
     return (
         <div className="games-page">
             <h1 className="page-title">My Games and Projects</h1>
-            {selectedGame ? (
+            {selectedGame && selectedGameData ? (
                 <div className="game-viewer-wrapper">
                     <GameViewer
-                        gamePath={selectedGameData!.path}
-                        instructions={selectedGameData!.instructions}
+                        gamePath={selectedGameData.path}
+                        instructions={selectedGameData.instructions}
                         onClose={handleCloseViewer}
                     />
                 </div>

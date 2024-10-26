@@ -11,20 +11,20 @@ export interface Game {
 
 const gameMakerGames: Game[] = [
     {
+        id: 'TopDownRogueLike',
+        title: 'Top Down Rogue Like',
+        description: 'Can you beat the boss??',
+        thumbnail: `${process.env.PUBLIC_URL}/assets/images/TopdownRoguelikeThumbnail.png`,
+        path: `${process.env.PUBLIC_URL}/assets/games/TopdownRoguelike/index.html`,
+        instructions: 'Use WASD to move. Left-click to attack. Explore the dungeon and defeat enemies.',
+    },
+    {
         id: 'MainQuest2',
         title: 'Android Mobile Game',
         description: 'Android Mobile Game, Test in browser!!',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/MainQuest2NewThumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/MainQuest2/index.html`,
         instructions: 'Use arrow keys to move. Press spacebar to jump. Collect coins and avoid obstacles.',
-    },
-    {
-        id: 'TopDownRogueLike',
-        title: 'Top Down Rogue Like',
-        description: 'A classic prototype',
-        thumbnail: `${process.env.PUBLIC_URL}/assets/images/TopdownRoguelikeThumbnail.png`,
-        path: `${process.env.PUBLIC_URL}/assets/games/TopdownRoguelike/index.html`,
-        instructions: 'Use WASD to move. Left-click to attack. Explore the dungeon and defeat enemies.',
     },
     {
         id: 'CoopAdventure',
