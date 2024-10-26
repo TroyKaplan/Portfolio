@@ -1,5 +1,4 @@
 {
-  "homepage": "https://www.troykaplan.com",
   "name": "portfolio",
   "version": "0.0.1",
   "private": true,
@@ -25,9 +24,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build",
-    "start": "react-scripts start",
+    "start": "node server.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
