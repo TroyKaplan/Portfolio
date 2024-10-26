@@ -1,14 +1,17 @@
-// server.js
 const express = require('express');
+const path = require('path');
 const axios = require('axios');
-const app = express();
 const cors = require('cors');
 
-// Use environment variables for sensitive data
 require('dotenv').config();
 
+const app = express();
+
 app.use(express.json());
-app.use(cors()); // Enable CORS for all routes
+app.use(cors());
+
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, 'build')));
 
 app.post('/run-code', async (req, res) => {
     const { code } = req.body;
@@ -25,6 +28,12 @@ app.post('/run-code', async (req, res) => {
     } catch (error) {
         res.status(500).json({ output: 'Error executing code. Server Not Enabled.' });
     }
+});
+
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 const PORT = process.env.PORT || 5000;
