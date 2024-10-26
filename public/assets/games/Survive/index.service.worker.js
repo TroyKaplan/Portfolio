@@ -4,7 +4,7 @@
 // Incrementing CACHE_VERSION will kick off the install event and force
 // previously cached resources to be updated from the network.
 /** @type {string} */
-const CACHE_VERSION = '1729921610|6928072125';
+const CACHE_VERSION = '1729953335|38652587414';
 /** @type {string} */
 const CACHE_PREFIX = 'Survivor IO-sw-cache-';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
