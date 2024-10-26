@@ -46,14 +46,6 @@ const gameMakerGames: Game[] = [
 ];
 const godotGames: Game[] = [
     {
-        id: 'SurviveIO',
-        title: 'MP Dedicated Server Survivo IO',
-        description: 'server runs through ec2 instance.',
-        thumbnail: `${process.env.PUBLIC_URL}/assets/images/BasicSmoke.png`,
-        path: `${process.env.PUBLIC_URL}/assets/games/Survive/index.html`,
-        instructions: 'Use arrow keys to move. Press spacebar to jump. Collect coins and play with friends.',
-    },
-    {
         id: 'Pong',
         title: 'Pong',
         description: 'Basic Pong Game',
@@ -71,5 +63,16 @@ const godotGames: Game[] = [
     },
     //add more
 ];
+const multiplayerGames: Game[] = [
+    {
+        id: 'SurviveIO',
+        title: 'MP Dedicated Server Survivo IO',
+        description: 'server runs through ec2 instance.',
+        thumbnail: `${process.env.PUBLIC_URL}/assets/images/BasicSmoke.png`,
+        path: `${process.env.PUBLIC_URL}/assets/games/Survive/index.html`,
+        instructions: 'Use arrow keys to move. Press spacebar to jump. Collect coins and play with friends.',
+    },
+    //add more
+];
 
-export default { gameMakerGames, godotGames };
+export default { gameMakerGames, godotGames, multiplayerGames };

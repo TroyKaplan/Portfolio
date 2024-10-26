@@ -8,6 +8,7 @@ const GamesPage: React.FC = () => {
     const [selectedGame, setSelectedGame] = useState<string | null>(null);
     const [gamemakerExpanded, setGamemakerExpanded] = useState(true);
     const [godotExpanded, setGodotExpanded] = useState(true);
+    const [multiplayerExpanded, setMultiplayerExpanded] = useState(true);
 
     const handleGameClick = (gameId: string) => {
         setSelectedGame(gameId);
@@ -23,6 +24,10 @@ const GamesPage: React.FC = () => {
 
     const toggleGodotSection = () => {
         setGodotExpanded(!godotExpanded);
+    };
+
+    const toggleMultiplayerSection = () => {
+        setMultiplayerExpanded(!multiplayerExpanded);
     };
 
     const allGames = [...gamesData.gameMakerGames, ...gamesData.godotGames];
@@ -44,7 +49,7 @@ const GamesPage: React.FC = () => {
                 <div className="game-sections">
                     <div className="game-section">
                         <h2 onClick={toggleGamemakerSection} className="section-title">
-                            Play in browser. No download required: Created with GameMaker {gamemakerExpanded ? '▼' : '▶'}
+                            Made With GameMaker. Play in browser. {gamemakerExpanded ? '▼' : '▶'}
                         </h2>
                         {gamemakerExpanded && (
                             <div className="game-list">
@@ -62,7 +67,7 @@ const GamesPage: React.FC = () => {
                     </div>
                     <div className="game-section">
                         <h2 onClick={toggleGodotSection} className="section-title">
-                            Made With Godot {godotExpanded ? '▼' : '▶'}
+                            Made With Godot. Play in browser. {godotExpanded ? '▼' : '▶'}
                         </h2>
                         {godotExpanded && (
                             <div className="game-list">
@@ -78,7 +83,25 @@ const GamesPage: React.FC = () => {
                             </div>
                         )}
                     </div>
-                </div>
+                    <div className="game-section">
+                        <h2 onClick={toggleMultiplayerSection} className="section-title">
+                            Multiplayer Browser Games {multiplayerExpanded ? '▼' : '▶'}
+                        </h2>
+                        {multiplayerExpanded && (
+                            <div className="game-list">
+                                {gamesData.multiplayerGames.map((game: Game) => (
+                                    <GameCard
+                                        key={game.id}
+                                        title={game.title}
+                                        description={game.description}
+                                        thumbnail={game.thumbnail}
+                                        onClick={() => handleGameClick(game.id)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div> 
             )}
         </div>
     );
