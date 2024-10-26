@@ -53,6 +53,14 @@ const godotGames: Game[] = [
         path: `${process.env.PUBLIC_URL}/assets/games/FirstGameGodot/First Game.html`,
         instructions: 'Use arrow keys to move. Press spacebar to jump. Collect coins and play with friends.',
     },
+    {
+        id: 'First Game',
+        title: 'Pong',
+        description: 'Basic Pong Game',
+        thumbnail: `${process.env.PUBLIC_URL}/assets/images/BasicSmoke.png`,
+        path: `${process.env.PUBLIC_URL}/assets/games/PongHTML5Godot/pong.html`,
+        instructions: 'Use arrow keys to move right paddle. W and S to move paddle up and down.',
+    },
     //add more
 ];
 
