@@ -77,7 +77,7 @@ const multiplayerGames: Game[] = [
         title: 'Rocket Game',
         description: 'Hosted on dedicated server',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/BasicSmoke.png`,
-        path: `${process.env.PUBLIC_URL}/assets/games/rocket-html5/index.html`,
+        path: `${process.env.PUBLIC_URL}/assets/games/rocket-game-client-html5/index.html`,
         instructions: 'Use A and D keys to rotate. Press W to fly',
     },
     //add more
