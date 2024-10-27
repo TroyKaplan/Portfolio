@@ -53,6 +53,24 @@ const GamesPage: React.FC = () => {
             ) : (
                 <div className="game-sections">
                     <div className="game-section">
+                        <h2 onClick={toggleMultiplayerSection} className="section-title">
+                            Multiplayer Browser Games {multiplayerExpanded ? '▼' : '▶'}
+                        </h2>
+                        {multiplayerExpanded && (
+                            <div className="game-list">
+                                {gamesData.multiplayerGames.map((game: Game) => (
+                                    <GameCard
+                                        key={game.id}
+                                        title={game.title}
+                                        description={game.description}
+                                        thumbnail={game.thumbnail}
+                                        onClick={() => handleGameClick(game.id)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <div className="game-section">
                         <h2 onClick={toggleGamemakerSection} className="section-title">
                             Made With GameMaker. Play in browser. {gamemakerExpanded ? '▼' : '▶'}
                         </h2>
@@ -77,24 +95,6 @@ const GamesPage: React.FC = () => {
                         {godotExpanded && (
                             <div className="game-list">
                                 {gamesData.godotGames.map((game: Game) => (
-                                    <GameCard
-                                        key={game.id}
-                                        title={game.title}
-                                        description={game.description}
-                                        thumbnail={game.thumbnail}
-                                        onClick={() => handleGameClick(game.id)}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    <div className="game-section">
-                        <h2 onClick={toggleMultiplayerSection} className="section-title">
-                            Multiplayer Browser Games {multiplayerExpanded ? '▼' : '▶'}
-                        </h2>
-                        {multiplayerExpanded && (
-                            <div className="game-list">
-                                {gamesData.multiplayerGames.map((game: Game) => (
                                     <GameCard
                                         key={game.id}
                                         title={game.title}
