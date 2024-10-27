@@ -90,7 +90,7 @@ const GamesPage: React.FC = () => {
                     </div>
                     <div className="game-section">
                         <h2 onClick={toggleGodotSection} className="section-title">
-                            Made With Godot. Play in browser. {godotExpanded ? '▼' : '▶'}
+                            Made With Godot. {godotExpanded ? '▼' : '▶'}
                         </h2>
                         {godotExpanded && (
                             <div className="game-list">
