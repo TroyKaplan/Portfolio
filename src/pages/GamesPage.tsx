@@ -72,7 +72,7 @@ const GamesPage: React.FC = () => {
                     </div>
                     <div className="game-section">
                         <h2 onClick={toggleGamemakerSection} className="section-title">
-                            Made With GameMaker. Play in browser. {gamemakerExpanded ? '▼' : '▶'}
+                            Made With GameMaker. F10 to toggle game fullscreen. {gamemakerExpanded ? '▼' : '▶'}
                         </h2>
                         {gamemakerExpanded && (
                             <div className="game-list">
