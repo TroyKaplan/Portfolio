@@ -72,6 +72,14 @@ const multiplayerGames: Game[] = [
         path: `${process.env.PUBLIC_URL}/assets/games/Survive/index.html`,
         instructions: 'Use arrow keys to move. Press spacebar to jump. Collect coins and play with friends.',
     },
+    {
+        id: 'RocketGame',
+        title: 'Rocket Game',
+        description: 'Hosted on dedicated server',
+        thumbnail: `${process.env.PUBLIC_URL}/assets/images/BasicSmoke.png`,
+        path: `${process.env.PUBLIC_URL}/assets/games/rocket-html5/index.html`,
+        instructions: 'Use A and D keys to rotate. Press W to fly',
+    },
     //add more
 ];
 
