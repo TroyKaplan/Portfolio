@@ -9,13 +9,24 @@ export interface Game {
     instructions: string; // New field for game instructions
 }
 
+const multiplayerGames: Game[] = [
+    {
+        id: 'RocketGame',
+        title: 'Rocket Game',
+        description: 'Hosted on dedicated server',
+        thumbnail: `${process.env.PUBLIC_URL}/assets/images/rocketgame-thumbnail.png`,
+        path: `${process.env.PUBLIC_URL}/assets/games/rocket-game-html5/index.html`,
+        instructions: 'Use A and D keys to rotate. Press W to fly',
+    },
+    //add more
+];
 const gameMakerGames: Game[] = [
     {
         id: 'TopDownRogueLike',
         title: 'TopDown RogueLike',
         description: 'Can you beat the boss?? Art by @Brtklob',
-        thumbnail: `${process.env.PUBLIC_URL}/assets/images/tdrl-image.png`,
-        path: `${process.env.PUBLIC_URL}/assets/games/tdrl-demo/index.html`,
+        thumbnail: `${process.env.PUBLIC_URL}/assets/images/tdrl-thumbnail.png`,
+        path: `${process.env.PUBLIC_URL}/assets/games/tdrl-html5/index.html`,
         instructions: 'Use WASD to move. Left-click to attack. Explore the dungeon and defeat enemies.',
     },
     {
@@ -49,20 +60,9 @@ const godotGames: Game[] = [
         id: 'Pong',
         title: 'Pong',
         description: 'Classic Pong',
-        thumbnail: `${process.env.PUBLIC_URL}/assets/images/Pong.png`,
+        thumbnail: `${process.env.PUBLIC_URL}/assets/images/pong-thumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/PongGodot/index.html`,
         instructions: 'Use arrow keys to move right paddle. W and S to move paddle up and down.',
-    },
-    //add more
-];
-const multiplayerGames: Game[] = [
-    {
-        id: 'RocketGame',
-        title: 'Rocket Game',
-        description: 'Hosted on dedicated server',
-        thumbnail: `${process.env.PUBLIC_URL}/assets/images/rocket-game-image.png`,
-        path: `${process.env.PUBLIC_URL}/assets/games/rocket-game-html5/index.html`,
-        instructions: 'Use A and D keys to rotate. Press W to fly',
     },
     //add more
 ];
