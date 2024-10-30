@@ -20,7 +20,7 @@ const galleryItems: GalleryItem[] = [
         id: 'item1',
         title: 'Visuals and VFX',
         description: 'A Collection of screenshots and videos of some VFX',
-        thumbnail: `${process.env.PUBLIC_URL}/assets/images/PinkBlast2.png`,
+        thumbnail: `${process.env.PUBLIC_URL}/assets/images/PinkBlast2thumb.png`,
         media: [
             { type: 'video', source: `${process.env.PUBLIC_URL}/assets/videos/FireBlastTeaser.mp4` },
             { type: 'image', source: `${process.env.PUBLIC_URL}/assets/images/BasicSmoke.png` },
