@@ -11,6 +11,14 @@ export interface Game {
 
 const multiplayerGames: Game[] = [
     {
+        id: 'WolfScape',
+        title: 'WolfScape',
+        description: 'Hosted on dedicated server',
+        thumbnail: `${process.env.PUBLIC_URL}/assets/images/rocketgame-thumbnail.png`,
+        path: `${process.env.PUBLIC_URL}/assets/games/wolfscape-html5/index.html`,
+        instructions: 'Click.',
+    },
+    {
         id: 'RocketGame',
         title: 'Rocket Game',
         description: 'Hosted on dedicated server',
