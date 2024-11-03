@@ -14,7 +14,7 @@ const multiplayerGames: Game[] = [
         id: 'WolfScape',
         title: 'WolfScape',
         description: 'Hosted on dedicated server',
-        thumbnail: `${process.env.PUBLIC_URL}/assets/images/rocketgame-thumbnail.png`,
+        thumbnail: `${process.env.PUBLIC_URL}/assets/images/wolfscape-thumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/wolfscape-html5/index.html`,
         instructions: 'Click.',
     },
