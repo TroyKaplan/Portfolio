@@ -16,19 +16,19 @@ const HomePage: React.FC = () => {
             <section className="navigation-links">
                 <Link to="/games" className="nav-link">
                     <h2>Games</h2>
-                    <p>Discover the games and projects I've been working on.</p>
+                    <p>Play browser based games I've created!</p>
                 </Link>
-                <Link to="/resume" className="nav-link">
+                {/*<Link to="/resume" className="nav-link">
                     <h2>Resume</h2>
                     <p>View my professional experience and skills.</p>
-                </Link>
+                </Link>*/}
                 <Link to="/gallery" className="nav-link">
                     <h2>Gallery</h2>
-                    <p>Browse through images, videos, and music created by me.</p>
+                    <p>Images, videos, projects and games that can't be shown in the games section.</p>
                 </Link>
                 <Link to="/tutorials" className="nav-link">
                     <h2>Tutorials</h2>
-                    <p>Explore tutorials on C++ and Unreal Engine.</p>
+                    <p>Explore tutorials for C++, Unreal Engine, and more!</p>
                 </Link>
             </section>
         </div>
