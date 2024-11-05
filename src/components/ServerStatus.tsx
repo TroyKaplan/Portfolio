@@ -13,7 +13,7 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ serverType }) => {
         const checkStatus = async () => {
             setIsLoading(true);
             try {
-                const response = await fetch('http://64.23.147.242:4350/status');
+                const response = await fetch('/api/game-status');
                 const data = await response.json();
                 setIsOnline(data[serverType]);
             } catch (error) {
