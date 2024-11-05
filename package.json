@@ -55,6 +55,5 @@
   },
   "engines": {
     "node": ">=14.0.0"
-  },
-  "homepage": "https://www.troykaplan.dev"
+  }
 }
