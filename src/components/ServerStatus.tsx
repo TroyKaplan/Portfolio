@@ -21,7 +21,7 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ serverType }) => {
         };
 
         checkStatus();
-        const interval = setInterval(checkStatus, 30000); // Check every 30 seconds
+        const interval = setInterval(checkStatus, 5000); // Check every 5 seconds
 
         return () => clearInterval(interval);
     }, [serverType]);

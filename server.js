@@ -51,7 +51,7 @@ app.get('/api/game-status', async (req, res) => {
         timeout: 2000 // 2 second timeout
       });
     } catch (httpsError) {
-      console.log('HTTPS failed, trying HTTP...');
+      //console.log('HTTPS failed, trying HTTP...');
       // Fall back to HTTP
       response = await axios.get('http://64.23.147.242:4350/status', {
         headers: {
