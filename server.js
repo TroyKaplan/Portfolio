@@ -48,7 +48,7 @@ app.get('/api/game-status', async (req, res) => {
         headers: {
           'Accept': 'application/json',
         },
-        timeout: 15000 // 15 second timeout
+        timeout: 1500 // 1.5 second timeout  MAKE LONGER WHEN YOU HAVE CERTS
       });
     } catch (httpsError) {
       // Fall back to HTTP
