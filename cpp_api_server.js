@@ -34,7 +34,7 @@ app.post('/run-code', async (req, res) => {
         });
         res.json({ output: response.data.output });
     } catch (error) {
-        res.status(500).json({ output: 'Error executing code. Server Not Enabled.' });
+        res.status(500).json({ output: 'Error executing code. JDoodle Server Not Enabled.' });
     }
 });
 
@@ -45,4 +45,4 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`CPP_API JDoodle Server running on port ${PORT}`));
