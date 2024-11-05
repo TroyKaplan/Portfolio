@@ -12,7 +12,7 @@ app.use(express.json());
 // Update CORS configuration
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://seahorse-app-thp9i.ondigitalocean.app', 'https://troykaplan.dev'] 
+    ? ['https://seahorse-app-thp9i.ondigitalocean.app', 'https://www.troykaplan.dev'] 
     : 'http://localhost:3000',
   optionsSuccessStatus: 200
 };
