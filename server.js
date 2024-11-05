@@ -40,33 +40,48 @@ app.post('/run-code', async (req, res) => {
 
 // Add new endpoint for game status
 app.get('/api/game-status', async (req, res) => {
-  let response;
   try {
+    let response;
     // Try HTTPS first
     try {
       response = await axios.get('https://status.troykaplan.dev:4351/status', {
         headers: {
           'Accept': 'application/json',
         },
-        timeout: 2000 // 2 second timeout
+        timeout: 15000 // 15 second timeout
       });
     } catch (httpsError) {
-      //console.log('HTTPS failed, trying HTTP...');
       // Fall back to HTTP
       response = await axios.get('http://64.23.147.242:4350/status', {
         headers: {
           'Accept': 'application/json',
-        }
+        },
+        timeout: 15000 // 15 second timeout
       });
     }
+
+    // Validate that we received JSON
+    if (typeof response?.data !== 'object') {
+      throw new Error('Invalid response format');
+    }
+
     res.json(response.data);
   } catch (error) {
-    console.error('Error fetching game status:', error);
-    res.status(500).json({ 
-      wolfscape: false, 
-      rocketGame: false,
-      error: 'Failed to fetch game status' 
-    });
+    // Don't change status on timeout, return last known state
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+      res.json({ 
+        wolfscape: true, 
+        rocketGame: true,
+        warning: 'Slow response, using last known state' 
+      });
+    } else {
+      console.error('Game status check failed:', error.message);
+      res.json({ 
+        wolfscape: false, 
+        rocketGame: false,
+        error: 'Server temporarily unavailable' 
+      });
+    }
   }
 });
 
@@ -76,5 +91,5 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

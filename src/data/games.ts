@@ -15,7 +15,7 @@ const multiplayerGames: Game[] = [
     {
         id: 'WolfScape',
         title: 'WolfScape',
-        description: 'Hosted on dedicated server',
+        description: 'You know what it is... Work in progress',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/wolfscape-thumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/wolfscape-html5/index.html`,
         instructions: 'Click.',
@@ -25,7 +25,7 @@ const multiplayerGames: Game[] = [
     {
         id: 'RocketGame',
         title: 'Rocket Game',
-        description: 'Hosted on dedicated server',
+        description: 'Fly some rockets around. Work in progress',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/rocketgame-thumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/rocket-game-html5/index.html`,
         instructions: 'Use A and D keys to rotate. Press W to fly',
@@ -38,7 +38,7 @@ const gameMakerGames: Game[] = [
     {
         id: 'TopDownRogueLike',
         title: 'TopDown RogueLike',
-        description: 'Can you beat the boss?? Art by @Bartkabob',
+        description: 'Can you beat the boss?? Art by @Bartkabob. Worth finishing??',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/tdrl-thumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/tdrl-html5/index.html`,
         instructions: 'Use WASD to move. Left-click to attack. Explore the dungeon and defeat enemies.',
