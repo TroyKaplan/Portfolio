@@ -6,7 +6,7 @@ interface ServerStatusProps {
 }
 
 const ServerStatus: React.FC<ServerStatusProps> = ({ serverType }) => {
-    const [isOnline, setIsOnline] = useState<boolean>(false);
+    const [isOnline, setIsOnline] = useState<boolean>(true);
 
     useEffect(() => {
         const checkStatus = async () => {
@@ -21,7 +21,7 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ serverType }) => {
         };
 
         checkStatus();
-        const interval = setInterval(checkStatus, 5000); // Check every 5 seconds
+        const interval = setInterval(checkStatus, 60000);
 
         return () => clearInterval(interval);
     }, [serverType]);
