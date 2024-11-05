@@ -12,7 +12,7 @@ app.use(express.json());
 // Update CORS configuration
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? 'https://seahorse-app-thp9i.ondigitalocean.app' 
+    ? ['https://seahorse-app-thp9i.ondigitalocean.app', 'https://troykaplan.dev'] 
     : 'http://localhost:3000',
   optionsSuccessStatus: 200
 };
@@ -44,5 +44,5 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`CPP_API JDoodle Server running on port ${PORT}`));
