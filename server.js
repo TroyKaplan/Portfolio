@@ -38,6 +38,25 @@ app.post('/run-code', async (req, res) => {
     }
 });
 
+// Add new endpoint for game status
+app.get('/api/game-status', async (req, res) => {
+  try {
+    const response = await axios.get('https://status.troykaplan.dev:4350/status', {
+      headers: {
+        'Accept': 'application/json',
+      }
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching game status:', error);
+    res.status(500).json({ 
+      wolfscape: false, 
+      rocketGame: false,
+      error: 'Failed to fetch game status' 
+    });
+  }
+});
+
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
 app.get('*', (req, res) => {
@@ -45,4 +64,4 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`CPP_API JDoodle Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
