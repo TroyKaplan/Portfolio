@@ -6,7 +6,9 @@ export interface Game {
     description: string;
     thumbnail: string;
     path: string;
-    instructions: string; // New field for game instructions
+    instructions: string;
+    isMultiplayer?: boolean;
+    serverType?: 'wolfscape' | 'rocketGame';
 }
 
 const multiplayerGames: Game[] = [
@@ -17,6 +19,8 @@ const multiplayerGames: Game[] = [
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/wolfscape-thumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/wolfscape-html5/index.html`,
         instructions: 'Click.',
+        isMultiplayer: true,
+        serverType: 'wolfscape',
     },
     {
         id: 'RocketGame',
@@ -25,6 +29,8 @@ const multiplayerGames: Game[] = [
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/rocketgame-thumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/rocket-game-html5/index.html`,
         instructions: 'Use A and D keys to rotate. Press W to fly',
+        isMultiplayer: true,
+        serverType: 'rocketGame',
     },
     //add more
 ];
@@ -36,6 +42,7 @@ const gameMakerGames: Game[] = [
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/tdrl-thumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/tdrl-html5/index.html`,
         instructions: 'Use WASD to move. Left-click to attack. Explore the dungeon and defeat enemies.',
+        isMultiplayer: false,
     },
     {
         id: 'MainQuest2',
@@ -52,6 +59,7 @@ const gameMakerGames: Game[] = [
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/CoopAdventureThumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/CoopAdventure/index.html`,
         instructions: 'Use WASD to move. Left/Right-click to attack. 1 and 2 to switch camera views. Arrow keys to move second player',
+        isMultiplayer: false,
     },
     {
         id: 'CompMultiplayerUCCS',
@@ -60,6 +68,7 @@ const gameMakerGames: Game[] = [
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/CompMultiplayerUCCSThumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/CompetitiveMultiplayerUCCS/index.html`,
         instructions: 'WASD and left control for left plane, arrow keys and right control for right plane, maybe shift.',
+        isMultiplayer: false,
     },
     //add more
 ];
@@ -71,6 +80,7 @@ const godotGames: Game[] = [
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/pong-thumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/PongGodot/index.html`,
         instructions: 'Use arrow keys to move right paddle. W and S to move paddle up and down.',
+        isMultiplayer: false,
     },
     //add more
 ];

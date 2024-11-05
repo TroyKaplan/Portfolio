@@ -65,6 +65,8 @@ const GamesPage: React.FC = () => {
                                         description={game.description}
                                         thumbnail={game.thumbnail}
                                         onClick={() => handleGameClick(game.id)}
+                                        isMultiplayer={game.isMultiplayer}
+                                        serverType={game.serverType}
                                     />
                                 ))}
                             </div>
