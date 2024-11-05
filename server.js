@@ -40,12 +40,25 @@ app.post('/run-code', async (req, res) => {
 
 // Add new endpoint for game status
 app.get('/api/game-status', async (req, res) => {
+  let response;
   try {
-    const response = await axios.get('https://status.troykaplan.dev:4350/status', {
-      headers: {
-        'Accept': 'application/json',
-      }
-    });
+    // Try HTTPS first
+    try {
+      response = await axios.get('https://status.troykaplan.dev:4351/status', {
+        headers: {
+          'Accept': 'application/json',
+        },
+        timeout: 2000 // 2 second timeout
+      });
+    } catch (httpsError) {
+      console.log('HTTPS failed, trying HTTP...');
+      // Fall back to HTTP
+      response = await axios.get('http://64.23.147.242:4350/status', {
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+    }
     res.json(response.data);
   } catch (error) {
     console.error('Error fetching game status:', error);
