@@ -38,7 +38,7 @@ const gameMakerGames: Game[] = [
     {
         id: 'TopDownRogueLike',
         title: 'TopDown RogueLike',
-        description: 'Can you beat the boss?? Art by @Bartkabob. Worth finishing??',
+        description: 'Can you beat the boss?? Level design by Bobby Klob. Port to Godot??',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/tdrl-thumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/tdrl-html5/index.html`,
         instructions: 'Use WASD to move. Left-click to attack. Explore the dungeon and defeat enemies.',
