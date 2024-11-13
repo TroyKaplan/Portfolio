@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import axios from 'axios';
 import { Tutorial } from '../data/tutorials';
 import './TutorialItem.css';
@@ -52,9 +54,12 @@ const TutorialItem: React.FC<TutorialItemProps> = ({ tutorial }) => {
                     <pre className="output-box">{output}</pre>
                 </>
             )}
-            {tutorial.type === 'code' && tutorial.section !== 'cpp' && (
-                // Handle other code types if needed
-                <pre>{tutorial.content}</pre>
+            {tutorial.type === 'code' && tutorial.section === 'unreal' && (
+                <div className="markdown-content">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {tutorial.content}
+                    </ReactMarkdown>
+                </div>
             )}
             {tutorial.type === 'iframe' && tutorial.iframeSrc && (
                 <iframe

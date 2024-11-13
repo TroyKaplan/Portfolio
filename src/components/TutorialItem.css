@@ -19,3 +19,58 @@
     max-width: 1000px; /* Slightly wider than tutorial items */
     margin: 0 auto;
 }
+
+.markdown-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+    font-size: 14px;
+    table-layout: fixed;
+    color: var(--table-text-color);
+    background-color: var(--background-color);
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    text-align: left;
+    vertical-align: top;
+    word-wrap: break-word;
+}
+
+.markdown-content th {
+    background-color: var(--table-header-bg);
+    font-weight: bold;
+}
+
+.markdown-content tr:nth-child(even) {
+    background-color: var(--table-stripe-bg);
+}
+
+.markdown-content tr:hover {
+    background-color: var(--table-hover-bg);
+}
+
+/* Column widths */
+.markdown-content th:nth-child(1),
+.markdown-content td:nth-child(1) {
+    width: 15%;  /* Class column */
+}
+
+.markdown-content th:nth-child(2),
+.markdown-content td:nth-child(2),
+.markdown-content th:nth-child(3),
+.markdown-content td:nth-child(3) {
+    width: 15%;  /* Server and Client Instance columns */
+}
+
+.markdown-content th:nth-child(4),
+.markdown-content td:nth-child(4) {
+    width: 20%;  /* Network Presence column */
+}
+
+.markdown-content th:nth-child(5),
+.markdown-content td:nth-child(5) {
+    width: 35%;  /* Details column */
+}
