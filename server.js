@@ -20,107 +20,148 @@ require('dotenv').config();
 const app = express();
 const server = require('http').createServer(app);
 
-// Move this BEFORE app.use(express.json())
+// Webhook handler
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
-  } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    console.log('[Webhook] Received event:', event.type);
 
-  console.log('Received webhook event:', event.type);
-
-  try {
     switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object;
-        console.log('Checkout session completed:', session);
+      case 'payment_intent.created':
+        console.log('[Webhook] Payment intent created:', event.data.object.id);
+        break;
+
+      case 'payment_intent.succeeded':
+        const paymentIntent = event.data.object;
+        console.log('[Webhook] Payment intent succeeded:', paymentIntent.id);
         
-        // Update user subscription status
+        // Update subscription status
+        if (paymentIntent.metadata.subscriptionId) {
+          console.log('[Webhook] Updating subscription status for:', paymentIntent.metadata.subscriptionId);
+          await pool.query(
+            `UPDATE users 
+             SET subscription_status = 'active',
+                 role = 'subscriber'
+             WHERE stripe_customer_id = $1`,
+            [paymentIntent.customer]
+          );
+        }
+        break;
+
+      case 'customer.subscription.created':
+        const newSubscription = event.data.object;
+        console.log('[Webhook] Subscription created:', newSubscription.id);
+        
+        // Store subscription metadata
+        await pool.query(
+          `UPDATE users 
+           SET subscription_id = $1,
+               subscription_status = $2,
+               subscription_start_date = to_timestamp($3),
+               subscription_end_date = to_timestamp($4)
+           WHERE stripe_customer_id = $5`,
+          [
+            newSubscription.id,
+            newSubscription.status,
+            newSubscription.current_period_start,
+            newSubscription.current_period_end,
+            newSubscription.customer
+          ]
+        );
+        break;
+
+      case 'invoice.created':
+        const createdInvoice = event.data.object;
+        console.log('[Webhook] Invoice created:', createdInvoice.id);
+        break;
+
+      case 'invoice.paid':
+        const paidInvoice = event.data.object;
+        console.log('[Webhook] Invoice paid:', paidInvoice.id);
+        
+        // Update subscription status when invoice is paid
         await pool.query(
           `UPDATE users 
            SET subscription_status = 'active',
-               subscription_id = $1,
-               subscription_start_date = NOW(),
-               subscription_end_date = NULL
-           WHERE id = $2`,
-          [session.subscription, session.metadata.userId]
+               role = 'subscriber'
+           WHERE stripe_customer_id = $1`,
+          [paidInvoice.customer]
         );
         break;
-      }
+
+      case 'invoice.payment_succeeded':
+        const successfulInvoice = event.data.object;
+        console.log('[Webhook] Invoice payment succeeded:', successfulInvoice.id);
+        
+        // Update subscription status
+        await pool.query(
+          `UPDATE users 
+           SET subscription_status = 'active',
+               role = 'subscriber'
+           WHERE stripe_customer_id = $1`,
+          [successfulInvoice.customer]
+        );
+        break;
+
+      case 'invoice.payment_failed':
+        const failedInvoice = event.data.object;
+        console.log('[Webhook] Invoice payment failed:', failedInvoice.id);
+        
+        // Update subscription status to failed
+        await pool.query(
+          `UPDATE users 
+           SET subscription_status = 'failed'
+           WHERE stripe_customer_id = $1`,
+          [failedInvoice.customer]
+        );
+        break;
+
+      case 'invoice.finalized':
+        const finalizedInvoice = event.data.object;
+        console.log('[Webhook] Invoice finalized:', finalizedInvoice.id);
+        break;
 
       case 'customer.subscription.updated':
-      case 'customer.subscription.created': {
-        const subscription = event.data.object;
-        console.log('Subscription updated:', subscription);
-
-        const status = subscription.status === 'trialing' ? 'active' : subscription.status;
+        const updatedSubscription = event.data.object;
+        console.log('[Webhook] Subscription updated:', updatedSubscription.id);
         
+        // Update subscription details
         await pool.query(
           `UPDATE users 
            SET subscription_status = $1,
                subscription_end_date = to_timestamp($2)
            WHERE stripe_customer_id = $3`,
-          [status, subscription.current_period_end, subscription.customer]
+          [
+            updatedSubscription.status,
+            updatedSubscription.current_period_end,
+            updatedSubscription.customer
+          ]
         );
         break;
-      }
 
-      case 'invoice.payment_succeeded': {
-        const invoice = event.data.object;
-        console.log('Invoice payment succeeded:', invoice);
-
-        if (invoice.billing_reason === 'subscription_create') {
-          await pool.query(
-            `UPDATE users 
-             SET subscription_status = 'active'
-             WHERE stripe_customer_id = $1`,
-            [invoice.customer]
-          );
-        }
-        break;
-      }
-
-      case 'invoice.payment_failed': {
-        const invoice = event.data.object;
-        console.log('Invoice payment failed:', invoice);
-
-        await pool.query(
-          `UPDATE users 
-           SET subscription_status = 'past_due'
-           WHERE stripe_customer_id = $1`,
-          [invoice.customer]
-        );
-        break;
-      }
-
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object;
-        console.log('Subscription deleted:', subscription);
-
+      case 'customer.subscription.deleted':
+        const deletedSubscription = event.data.object;
+        console.log('[Webhook] Subscription deleted:', deletedSubscription.id);
+        
+        // Update user status
         await pool.query(
           `UPDATE users 
            SET subscription_status = 'canceled',
-               subscription_end_date = to_timestamp($1)
-           WHERE stripe_customer_id = $2`,
-          [subscription.current_period_end, subscription.customer]
+               role = 'user',
+               subscription_id = NULL
+           WHERE stripe_customer_id = $1`,
+          [deletedSubscription.customer]
         );
         break;
-      }
     }
 
     res.json({ received: true });
-  } catch (error) {
-    console.error('Error processing webhook:', error);
-    res.status(500).json({ error: 'Webhook processing failed' });
+  } catch (err) {
+    console.error('[Webhook] Error:', err.message);
+    res.status(400).send(`Webhook Error: ${err.message}`);
   }
 });
 
@@ -455,8 +496,9 @@ app.post('/api/create-subscription', ensureAuthenticated, async (req, res) => {
       );
     }
 
-    // Create subscription with payment intent
     console.log('[SubscriptionService] Creating subscription with payment intent');
+    
+    // Create the subscription
     const subscription = await stripe.subscriptions.create({
       customer: stripeCustomerId,
       items: [{ price: process.env.STRIPE_PRICE_ID }],
@@ -480,7 +522,7 @@ app.post('/api/create-subscription', ensureAuthenticated, async (req, res) => {
            subscription_start_date = NOW(),
            subscription_end_date = to_timestamp($3)
        WHERE id = $4`,
-      ['pending', subscription.id, subscription.current_period_end, req.user.id]
+      ['incomplete', subscription.id, subscription.current_period_end, req.user.id]
     );
 
     res.json({
