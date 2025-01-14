@@ -100,7 +100,17 @@ const CheckoutForm: React.FC = () => {
         setError(data.error);
       } else {
         console.log('[CheckoutForm] Subscription created successfully:', data);
-        window.location.href = '/games';
+
+        // Confirm the payment intent
+        const { error: confirmError } = await stripe.confirmCardPayment(data.clientSecret);
+
+        if (confirmError) {
+          console.error('[CheckoutForm] Payment confirmation error:', confirmError);
+          setError(confirmError.message || 'Payment confirmation failed');
+        } else {
+          console.log('[CheckoutForm] Payment confirmed successfully');
+          window.location.href = '/games';
+        }
       }
     } catch (err) {
       console.error('[CheckoutForm] Unexpected error:', err);
