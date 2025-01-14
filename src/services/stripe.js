@@ -72,7 +72,11 @@ const updateCustomer = async (userId, customerId) => {
 
 const updateSubscriptionDetails = async (pool, userId, subscriptionId, status) => {
   const logPrefix = `[StripeService:updateSubscriptionDetails] [UserID: ${userId}]`;
-  console.log(`${logPrefix} Starting subscription update...`);
+  console.log(`${logPrefix} Starting subscription update...`, {
+    userId,
+    subscriptionId,
+    originalStatus: status
+  });
   
   try {
     // Map Stripe status to our internal status
@@ -86,7 +90,12 @@ const updateSubscriptionDetails = async (pool, userId, subscriptionId, status) =
     
     const role = subscriptionStatus === 'active' ? 'subscriber' : 'user';
     
-    console.log(`${logPrefix} Mapped status:`, { original: status, mapped: subscriptionStatus, role });
+    console.log(`${logPrefix} Mapped status:`, { 
+      original: status, 
+      mapped: subscriptionStatus, 
+      role,
+      subscriptionId 
+    });
 
     const result = await pool.query(
       `UPDATE users 
@@ -103,7 +112,7 @@ const updateSubscriptionDetails = async (pool, userId, subscriptionId, status) =
              ELSE subscription_end_date 
            END
        WHERE id = $4
-       RETURNING *`,
+       RETURNING subscription_status, role, subscription_id, subscription_start_date, subscription_end_date`,
       [subscriptionStatus, subscriptionId, role, userId]
     );
     
@@ -111,9 +120,10 @@ const updateSubscriptionDetails = async (pool, userId, subscriptionId, status) =
       throw new Error('User not found');
     }
     
+    console.log(`${logPrefix} Update successful:`, result.rows[0]);
     return result.rows[0];
   } catch (error) {
-    console.error(`${logPrefix} Error:`, error);
+    console.error(`${logPrefix} Error updating subscription:`, error);
     throw error;
   }
 };

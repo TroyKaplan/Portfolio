@@ -17,6 +17,11 @@ const mapStripeStatus = (status: string): string => {
   return statusMap[status as StripeStatus] || status;
 };
 
+interface SubscriptionStatus {
+  label: string;
+  color: string;
+}
+
 const UserProfile: React.FC = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,20 +89,27 @@ const UserProfile: React.FC = () => {
     }
   });
 
-  const statusMap: Record<string, { label: string; color: string }> = {
-    'incomplete': { label: 'Pending', color: 'orange' },
-    'incomplete_expired': { label: 'Inactive', color: 'red' },
-    'trialing': { label: 'Active', color: 'green' },
-    'active': { label: 'Active', color: 'green' },
-    'past_due': { label: 'Past Due', color: 'red' },
-    'canceled': { label: 'Canceled', color: 'gray' },
-    'unpaid': { label: 'Unpaid', color: 'red' },
-    'pending': { label: 'Pending', color: 'orange' }
+  const getSubscriptionStatus = (status: string): SubscriptionStatus => {
+    console.log('[UserProfile] Getting status for:', status);
+    
+    const statusMap: Record<string, SubscriptionStatus> = {
+      'incomplete': { label: 'Pending', color: 'orange' },
+      'incomplete_expired': { label: 'Inactive', color: 'red' },
+      'trialing': { label: 'Active', color: 'green' },
+      'active': { label: 'Active', color: 'green' },
+      'past_due': { label: 'Past Due', color: 'red' },
+      'canceled': { label: 'Canceled', color: 'gray' },
+      'unpaid': { label: 'Unpaid', color: 'red' },
+      'pending': { label: 'Pending', color: 'orange' }
+    };
+
+    const result = statusMap[status] || { label: status || 'Unknown', color: 'gray' };
+    console.log('[UserProfile] Mapped status:', { input: status, output: result });
+    return result;
   };
 
-  const statusInfo = statusMap[userProfile.subscription_status] || 
-    { label: userProfile.subscription_status || 'Unknown', color: 'gray' };
-  
+  const subscriptionStatus = getSubscriptionStatus(userProfile?.subscription_status || 'unknown');
+
   return (
     <div className="user-profile-page">
       <div className="header-section">

@@ -27,18 +27,48 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
   
   try {
     const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-    console.log(`${logPrefix} Processing event:`, event.type);
+    console.log(`${logPrefix} Processing event:`, event.type, JSON.stringify(event.data.object, null, 2));
 
-    if (event.type === 'invoice.payment_succeeded') {
-      const subscription = event.data.object;
-      console.log(`${logPrefix} Payment succeeded for subscription:`, subscription.subscription);
-      
-      await stripeService.updateSubscriptionDetails(
-        pool,
-        subscription.customer,
-        subscription.subscription,
-        'active'
-      );
+    switch (event.type) {
+      case 'invoice.payment_succeeded':
+        const invoice = event.data.object;
+        console.log(`${logPrefix} Payment succeeded:`, {
+          subscriptionId: invoice.subscription,
+          customerId: invoice.customer,
+          status: 'active'
+        });
+        
+        await stripeService.updateSubscriptionDetails(
+          pool,
+          invoice.customer,
+          invoice.subscription,
+          'active'
+        );
+        break;
+
+      case 'customer.subscription.updated':
+        const subscription = event.data.object;
+        console.log(`${logPrefix} Subscription updated:`, {
+          subscriptionId: subscription.id,
+          customerId: subscription.customer,
+          status: subscription.status
+        });
+        
+        await stripeService.updateSubscriptionDetails(
+          pool,
+          subscription.customer,
+          subscription.id,
+          subscription.status
+        );
+        break;
+
+      case 'payment_intent.succeeded':
+        const paymentIntent = event.data.object;
+        console.log(`${logPrefix} Payment intent succeeded:`, {
+          subscriptionId: paymentIntent.metadata.subscription_id,
+          customerId: paymentIntent.customer
+        });
+        break;
     }
 
     res.json({ received: true });
