@@ -103,20 +103,16 @@ const UserProfile: React.FC = () => {
         <h3>Basic Information</h3>
         <p>Username: {userProfile.username}</p>
         <p>Email: {userProfile.email}</p>
-        <p>Role: {userProfile.role}</p>
+        <p>Role: <span className={`role-badge ${userProfile.role.toLowerCase()}`}>{userProfile.role}</span></p>
       </div>
 
       <div className="profile-section">
         <h3>Subscription Details</h3>
-        <p>Status: <span style={{ 
-          color: subscriptionStatus.color,
-          fontWeight: 'bold',
-          padding: '4px 8px',
-          borderRadius: '4px',
-          backgroundColor: `${subscriptionStatus.color}20` // 20 is hex for 12% opacity
-        }}>
-          {subscriptionStatus.label}
-        </span></p>
+        <p>Status: 
+          <span className={`status-badge ${subscriptionStatus.label.toLowerCase()}`}>
+            {subscriptionStatus.label}
+          </span>
+        </p>
         {userProfile.subscription_start_date && (
           <p>Start Date: {new Date(userProfile.subscription_start_date).toLocaleDateString()}</p>
         )}
@@ -127,7 +123,12 @@ const UserProfile: React.FC = () => {
 
       <div className="profile-section">
         <h3>Statistics</h3>
-        <p>Total Time Spent: {userProfile.total_time_spent || 0} seconds</p>
+        <div className="stats-grid">
+          <div className="stat-item">
+            <div className="stat-value">{userProfile.total_time_spent || 0}</div>
+            <div className="stat-label">Total Seconds</div>
+          </div>
+        </div>
       </div>
     </div>
   );
