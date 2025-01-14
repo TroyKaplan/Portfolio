@@ -48,34 +48,38 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
     console.log(`${logPrefix} Received event:`, event.type);
 
     switch (event.type) {
-      case 'invoice.payment_succeeded':
-        const invoice = event.data.object;
-        console.log(`${logPrefix} Processing payment success for customer:`, invoice.customer);
-        
-        // Update user role and subscription status immediately
+      case 'customer.subscription.updated':
+      case 'customer.subscription.created':
+        const subscription = event.data.object;
+        const now = Math.floor(Date.now() / 1000);
+        const shouldBeSubscriber = (
+          subscription.status === 'active' || 
+          (subscription.status === 'canceled' && subscription.current_period_end > now)
+        );
+
         await pool.query(
           `UPDATE users 
-           SET subscription_status = 'active',
-               role = 'subscriber',
-               subscription_end_date = to_timestamp($1),
-               subscription_start_date = to_timestamp($2)
-           WHERE stripe_customer_id = $3`,
+           SET subscription_status = $1,
+               role = CASE WHEN $5 THEN 'subscriber' ELSE 'user' END,
+               subscription_end_date = to_timestamp($2),
+               subscription_start_date = to_timestamp($3),
+               subscription_id = $4
+           WHERE stripe_customer_id = $6`,
           [
-            invoice.lines.data[0].period.end,
-            invoice.lines.data[0].period.start,
-            invoice.customer
+            subscription.status,
+            subscription.current_period_end,
+            subscription.current_period_start,
+            subscription.id,
+            shouldBeSubscriber,
+            subscription.customer
           ]
         );
         break;
 
       case 'customer.subscription.deleted':
-        const subscription = event.data.object;
-        console.log(`${logPrefix} Processing subscription deletion for:`, subscription.customer);
-        
-        // Calculate remaining time and update user status
-        const now = Math.floor(Date.now() / 1000);
-        const endTime = subscription.current_period_end;
-        const hasRemainingTime = endTime > now;
+        const deletedSub = event.data.object;
+        const endTime = deletedSub.current_period_end;
+        const hasRemainingTime = endTime > Math.floor(Date.now() / 1000);
 
         await pool.query(
           `UPDATE users 
@@ -84,12 +88,16 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
                  WHEN $2 > extract(epoch from now()) THEN 'subscriber'
                  ELSE 'user'
                END,
-               subscription_end_date = to_timestamp($2)
+               subscription_end_date = to_timestamp($2),
+               subscription_id = CASE 
+                 WHEN $2 <= extract(epoch from now()) THEN NULL 
+                 ELSE subscription_id 
+               END
            WHERE stripe_customer_id = $3`,
           [
             hasRemainingTime ? 'canceled' : 'inactive',
             endTime,
-            subscription.customer
+            deletedSub.customer
           ]
         );
         break;
@@ -324,39 +332,93 @@ app.post('/api/auth/register', async (req, res) => {
 
 // Login route
 app.post('/api/auth/login', passport.authenticate('local'), async (req, res) => {
+  const logPrefix = '[Login]';
   try {
-    const { deviceInfo } = req.body;
-    // Update user's last login and device info
+    // Update last login time
     await pool.query(
-      `UPDATE users 
-       SET last_login = CURRENT_TIMESTAMP
-       WHERE id = $1`,
+      'UPDATE users SET last_login = NOW() WHERE id = $1',
       [req.user.id]
     );
 
-    // Track session with device info
-    await pool.query(
-      `INSERT INTO user_sessions (sid, user_id, device_info, expire, sess)
-       VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (sid) 
-       DO UPDATE SET 
-         user_id = $2,
-         device_info = $3,
-         expire = $4,
-         sess = $5`,
-      [
-        req.sessionID, 
-        req.user.id, 
-        deviceInfo, 
-        req.session.cookie.expires,
-        JSON.stringify(req.session)
-      ]
+    // Fetch and verify subscription status
+    const result = await pool.query(
+      `SELECT subscription_status, subscription_end_date, subscription_id, 
+              stripe_customer_id, role
+       FROM users WHERE id = $1`,
+      [req.user.id]
     );
+    
+    const userData = result.rows[0];
 
-    res.json({ message: 'Logged in successfully', user: req.user });
+    if (userData.stripe_customer_id && userData.subscription_id) {
+      try {
+        const stripeSubscription = await stripe.subscriptions.retrieve(userData.subscription_id);
+        const now = Math.floor(Date.now() / 1000);
+        const shouldBeSubscriber = (
+          stripeSubscription.status === 'active' || 
+          (stripeSubscription.status === 'canceled' && stripeSubscription.current_period_end > now)
+        );
+
+        // Update subscription status and role if needed
+        if (stripeSubscription.status !== userData.subscription_status || 
+            (shouldBeSubscriber && userData.role !== 'subscriber')) {
+          console.log(`${logPrefix} Updating subscription status on login`);
+          
+          const updateResult = await pool.query(
+            `UPDATE users 
+             SET subscription_status = $1,
+                 role = CASE 
+                   WHEN $4 THEN 'subscriber'
+                   ELSE 'user'
+                 END,
+                 subscription_end_date = to_timestamp($2)
+             WHERE id = $3
+             RETURNING role, subscription_status, subscription_end_date`,
+            [
+              stripeSubscription.status,
+              stripeSubscription.current_period_end,
+              req.user.id,
+              shouldBeSubscriber
+            ]
+          );
+
+          // Update the user object with new data
+          req.user.role = updateResult.rows[0].role;
+          req.user.subscription_status = updateResult.rows[0].subscription_status;
+          req.user.subscription_end_date = updateResult.rows[0].subscription_end_date;
+        }
+      } catch (stripeError) {
+        console.error(`${logPrefix} Stripe error:`, stripeError);
+        if (stripeError.code === 'resource_missing') {
+          console.log(`${logPrefix} Subscription not found in Stripe, marking as inactive`);
+          await pool.query(
+            `UPDATE users 
+             SET subscription_status = 'inactive',
+                 role = 'user',
+                 subscription_id = NULL,
+                 subscription_end_date = NULL
+             WHERE id = $1`,
+            [req.user.id]
+          );
+          req.user.role = 'user';
+          req.user.subscription_status = 'inactive';
+        }
+      }
+    }
+
+    res.json({ 
+      user: {
+        id: req.user.id,
+        username: req.user.username,
+        email: req.user.email,
+        role: req.user.role,
+        subscription_status: req.user.subscription_status,
+        subscription_end_date: req.user.subscription_end_date
+      }
+    });
   } catch (error) {
-    console.error('Session tracking error:', error);
-    res.json({ message: 'Logged in successfully', user: req.user });
+    console.error(`${logPrefix} Error during login:`, error);
+    res.status(500).json({ message: 'Error during login process' });
   }
 });
 
