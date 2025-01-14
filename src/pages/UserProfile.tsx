@@ -7,6 +7,10 @@ import ErrorMessage from '../components/shared/ErrorMessage';
 import ProfileActions from '../components/ProfileActions';
 import './UserProfile.css';
 
+const API_URL = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:8080' 
+  : '';
+
 const UserProfile: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -15,37 +19,56 @@ const UserProfile: React.FC = () => {
 
   useEffect(() => {
     const checkAuthAndFetchProfile = async () => {
+      console.log('=== Starting Auth Check ===');
+      console.log('API_URL:', API_URL);
+      console.log('Current Environment:', process.env.NODE_ENV);
+      
       try {
-        console.log('Starting profile fetch process...');
-        const authResponse = await axios.get('/api/auth/current-user', {
-          withCredentials: true
-        });
-        console.log('Auth check response:', {
-          status: authResponse.status,
-          data: authResponse.data
+        console.log('Making auth request with config:', {
+          url: `${API_URL}/api/auth/current-user`,
+          withCredentials: true,
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
         });
 
-        if (!authResponse.data.user) {
-          console.warn('No user found in auth response, redirecting to login');
-          navigate('/login');
+        const authResponse = await axios.get(`${API_URL}/api/auth/current-user`, {
+          withCredentials: true,
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        console.log('Auth Response:', {
+          status: authResponse.status,
+          headers: authResponse.headers,
+          data: authResponse.data,
+          cookies: document.cookie
+        });
+
+        if (!authResponse.data?.user) {
+          console.warn('Auth Failed - No user data:', authResponse.data);
+          navigate('/login', { replace: true });
           return;
         }
 
-        console.log('Fetching detailed profile data...');
-        const profileResponse = await axios.get('/api/user/profile', {
+        console.log('Auth Successful - User:', authResponse.data.user);
+        console.log('=== Starting Profile Fetch ===');
+
+        const profileResponse = await axios.get(`${API_URL}/api/user/profile`, {
           withCredentials: true,
           headers: { 
             'Accept': 'application/json',
             'Content-Type': 'application/json'
-          },
-          transformResponse: [(data) => {
-            try {
-              return JSON.parse(data);
-            } catch (error) {
-              console.error('Error parsing response:', data);
-              return null;
-            }
-          }]
+          }
+        });
+
+        console.log('Profile Response:', {
+          status: profileResponse.status,
+          headers: profileResponse.headers,
+          data: profileResponse.data
         });
 
         if (!profileResponse.data || typeof profileResponse.data === 'string') {
@@ -72,26 +95,29 @@ const UserProfile: React.FC = () => {
 
         setUserProfile(profileResponse.data);
       } catch (err) {
-        console.error('Profile fetch error:', {
-          error: err,
-          type: err instanceof Error ? err.constructor.name : typeof err,
-          message: err instanceof Error ? err.message : 'Unknown error'
-        });
-
+        console.error('=== Auth/Profile Error Details ===');
+        console.error('Error Type:', err instanceof Error ? err.constructor.name : typeof err);
+        console.error('Error Message:', err instanceof Error ? err.message : 'Unknown error');
+        
         if (axios.isAxiosError(err)) {
-          console.error('Axios error details:', {
+          console.error('Axios Error Config:', {
+            url: err.config?.url,
+            method: err.config?.method,
+            headers: err.config?.headers,
+            withCredentials: err.config?.withCredentials
+          });
+          console.error('Axios Error Response:', {
             status: err.response?.status,
             statusText: err.response?.statusText,
+            headers: err.response?.headers,
             data: err.response?.data
           });
-          setError(err.response?.data?.message || 'Failed to load profile data');
-        } else {
-          setError('An unexpected error occurred');
         }
-        
+
         if (axios.isAxiosError(err) && err.response?.status === 401) {
-          console.warn('Unauthorized access, redirecting to login');
-          navigate('/login');
+          console.warn('Session expired, redirecting to login');
+          navigate('/login', { replace: true });
+          return;
         }
       } finally {
         setIsLoading(false);
