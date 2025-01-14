@@ -240,39 +240,60 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
+  color: var(--text-color);
+  background-color: var(--background-color);
 }
 
 .profile-section {
   margin-bottom: 24px;
   padding: 16px;
   border-radius: 8px;
-  background-color: var(--card-background);
+  background-color: var(--card-background-color);
   border: 1px solid var(--border-color);
   box-shadow: var(--card-shadow);
-  transition: all 0.3s ease;
 }
 
-.profile-section:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--card-shadow-hover);
-}
-
+.profile-section h2,
 .profile-section h3 {
   margin-top: 0;
-  color: var(--text-primary);
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 16px;
+  color: var(--text-color-primary);
   border-bottom: 2px solid var(--border-color);
-  padding-bottom: 8px;
+  padding-bottom: 10px;
 }
 
 .profile-section p {
-  color: var(--text-secondary);
+  color: var(--text-color);
   margin: 8px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.stat-item {
+  background-color: var(--card-background-color);
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--text-color-secondary);
+  text-align: center;
+  margin-top: 4px;
 }
 
 /* Status Badge */
