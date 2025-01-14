@@ -44,37 +44,54 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-    console.log('[Webhook] Received event:', event.type);
+    console.log('[Webhook] Received event:', event.type, 'Event ID:', event.id);
 
     switch (event.type) {
       case 'payment_intent.succeeded':
         const paymentIntent = event.data.object;
-        if (paymentIntent.metadata.subscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(paymentIntent.metadata.subscriptionId);
-          await updateSubscriptionStatus(
-            pool,
-            paymentIntent.customer,
-            subscription.id,
-            'active',
-            subscription.current_period_end
-          );
-        }
+        console.log('[Webhook] Payment succeeded:', {
+          paymentIntentId: paymentIntent.id,
+          customerId: paymentIntent.customer,
+          amount: paymentIntent.amount,
+          status: paymentIntent.status
+        });
+        
+        await updateSubscriptionStatus(
+          pool,
+          paymentIntent.customer,
+          paymentIntent.metadata.subscriptionId,
+          'active',
+          Math.floor(Date.now() / 1000) + (90 * 24 * 60 * 60)
+        );
         break;
 
       case 'invoice.paid':
         const paidInvoice = event.data.object;
-        const paidSubscription = await stripe.subscriptions.retrieve(paidInvoice.subscription);
+        console.log('[Webhook] Invoice paid:', {
+          invoiceId: paidInvoice.id,
+          customerId: paidInvoice.customer,
+          subscriptionId: paidInvoice.subscription,
+          amount: paidInvoice.amount_paid
+        });
+        
         await updateSubscriptionStatus(
           pool,
           paidInvoice.customer,
-          paidSubscription.id,
+          paidInvoice.subscription,
           'active',
-          paidSubscription.current_period_end
+          Math.floor(Date.now() / 1000) + (90 * 24 * 60 * 60)
         );
         break;
 
       case 'invoice.payment_failed':
         const failedInvoice = event.data.object;
+        console.log('[Webhook] Payment failed:', {
+          invoiceId: failedInvoice.id,
+          customerId: failedInvoice.customer,
+          subscriptionId: failedInvoice.subscription,
+          attemptCount: failedInvoice.attempt_count
+        });
+        
         await updateSubscriptionStatus(
           pool,
           failedInvoice.customer,
@@ -83,22 +100,16 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
           null
         );
         break;
-
-      case 'customer.subscription.deleted':
-        const deletedSubscription = event.data.object;
-        await updateSubscriptionStatus(
-          pool,
-          deletedSubscription.customer,
-          null,
-          'inactive',
-          null
-        );
-        break;
     }
 
+    console.log('[Webhook] Successfully processed:', event.type);
     res.json({ received: true });
   } catch (error) {
-    console.error('[Webhook] Error:', error);
+    console.error('[Webhook] Error:', {
+      message: error.message,
+      type: error.type,
+      stack: error.stack
+    });
     res.status(400).send(`Webhook Error: ${error.message}`);
   }
 });
@@ -415,6 +426,7 @@ app.post('/api/create-subscription', ensureAuthenticated, async (req, res) => {
   try {
     console.log('[SubscriptionService] Starting subscription creation for user:', req.user.id);
     
+    // Get or create customer
     let customer = await pool.query('SELECT stripe_customer_id FROM users WHERE id = $1', [req.user.id]);
     let stripeCustomerId = customer.rows[0]?.stripe_customer_id;
     
@@ -432,36 +444,24 @@ app.post('/api/create-subscription', ensureAuthenticated, async (req, res) => {
       );
     }
 
+    // Create the subscription
     const subscription = await stripe.subscriptions.create({
       customer: stripeCustomerId,
       items: [{ price: process.env.STRIPE_PRICE_ID }],
       payment_behavior: 'default_incomplete',
-      payment_settings: { 
-        payment_method_types: ['card'],
-        save_default_payment_method: 'on_subscription' 
-      },
+      payment_settings: { save_default_payment_method: 'on_subscription' },
       expand: ['latest_invoice.payment_intent'],
-      metadata: { 
-        userId: req.user.id,
-        subscriptionId: 'pending' // Will be updated after creation
-      }
+      metadata: { userId: req.user.id }
     });
 
-    // Update the subscription's metadata with its own ID
-    await stripe.subscriptions.update(subscription.id, {
-      metadata: { 
-        userId: req.user.id,
-        subscriptionId: subscription.id
-      }
-    });
-
+    // Update user record
     await pool.query(
       `UPDATE users 
-       SET subscription_status = $1,
-           subscription_id = $2,
+       SET subscription_id = $1,
+           subscription_status = 'incomplete',
            subscription_start_date = NOW()
-       WHERE id = $3`,
-      ['incomplete', subscription.id, req.user.id]
+       WHERE id = $2`,
+      [subscription.id, req.user.id]
     );
 
     res.json({
