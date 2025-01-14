@@ -889,3 +889,20 @@ app.post('/api/user/change-password', ensureAuthenticated, async (req, res) => {
     res.status(500).json({ message: 'Error changing password' });
   }
 });
+
+// Add this route for development environment only
+if (process.env.NODE_ENV === 'development') {
+  app.get('/api/user/profile', (req, res) => {
+    res.json({
+      user: {
+        username: "TestUser",
+        email: "test@example.com",
+        role: "user",
+        subscription_status: "pending",
+        subscription_start_date: "2024-01-14T00:00:00.000Z",
+        subscription_end_date: null,
+        total_time_spent: 7384 // This will show as "2h 3m"
+      }
+    });
+  });
+}
