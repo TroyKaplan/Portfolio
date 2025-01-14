@@ -22,19 +22,19 @@ const server = http.createServer(app);
 
 // Add helper function
 async function updateSubscriptionStatus(pool, customerId, subscriptionId, status, endDate) {
-  const role = status === 'active' ? 'subscriber' : 'user';
-  
-  await pool.query(
-    `UPDATE users 
-     SET subscription_status = $1,
-         role = $2,
-         subscription_id = $3,
-         subscription_end_date = to_timestamp($4)
-     WHERE stripe_customer_id = $5`,
-    [status, role, subscriptionId, endDate, customerId]
-  );
-  
-  console.log(`[SubscriptionService] Updated status for customer ${customerId}: ${status}`);
+  try {
+    const query = `
+      UPDATE users 
+      SET subscription_status = $1,
+          subscription_id = $2,
+          subscription_end_date = $3
+      WHERE stripe_customer_id = $4
+    `;
+    await pool.query(query, [status, subscriptionId, endDate, customerId]);
+    console.log(`[updateSubscriptionStatus] Updated subscription status for customer ${customerId} to ${status}`);
+  } catch (error) {
+    console.error('[updateSubscriptionStatus] Error updating subscription status:', error);
+  }
 }
 
 // Webhook handler
@@ -48,11 +48,39 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
     switch (event.type) {
       case 'payment_intent.succeeded':
-        // Handle successful payment intent
+        const paymentIntent = event.data.object;
+        console.log('[Webhook] Payment succeeded:', {
+          paymentIntentId: paymentIntent.id,
+          customerId: paymentIntent.customer,
+          subscriptionId: paymentIntent.metadata.subscriptionId
+        });
+
+        // Update subscription status to active
+        await updateSubscriptionStatus(
+          pool,
+          paymentIntent.customer,
+          paymentIntent.metadata.subscriptionId,
+          'active',
+          null // Set the end date if needed
+        );
         break;
 
       case 'invoice.paid':
-        // Handle successful invoice payment
+        const paidInvoice = event.data.object;
+        console.log('[Webhook] Invoice paid:', {
+          invoiceId: paidInvoice.id,
+          customerId: paidInvoice.customer,
+          subscriptionId: paidInvoice.subscription
+        });
+
+        // Update subscription status for recurring payments
+        await updateSubscriptionStatus(
+          pool,
+          paidInvoice.customer,
+          paidInvoice.subscription,
+          'active',
+          null // Set the end date if needed
+        );
         break;
 
       case 'invoice.payment_failed':
@@ -60,10 +88,9 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
         console.log('[Webhook] Payment failed:', {
           invoiceId: failedInvoice.id,
           customerId: failedInvoice.customer,
-          subscriptionId: failedInvoice.subscription,
-          attemptCount: failedInvoice.attempt_count
+          subscriptionId: failedInvoice.subscription
         });
-        
+
         await updateSubscriptionStatus(
           pool,
           failedInvoice.customer,
