@@ -445,13 +445,23 @@ app.post('/api/create-subscription', ensureAuthenticated, async (req, res) => {
       );
     }
 
+    // Attach the payment method to the customer
+    await stripe.paymentMethods.attach(req.body.paymentMethodId, {
+      customer: stripeCustomerId,
+    });
+
+    // Set the payment method as the default for the customer
+    await stripe.customers.update(stripeCustomerId, {
+      invoice_settings: {
+        default_payment_method: req.body.paymentMethodId,
+      },
+    });
+
     // Create the subscription
     const subscription = await stripe.subscriptions.create({
       customer: stripeCustomerId,
       items: [{ price: process.env.STRIPE_PRICE_ID }],
-      default_payment_method: req.body.paymentMethodId,
       payment_behavior: 'default_incomplete',
-      payment_settings: { save_default_payment_method: 'on_subscription' },
       expand: ['latest_invoice.payment_intent'],
       metadata: { userId: req.user.id }
     });
