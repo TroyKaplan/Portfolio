@@ -48,39 +48,11 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
     switch (event.type) {
       case 'payment_intent.succeeded':
-        const paymentIntent = event.data.object;
-        console.log('[Webhook] Payment succeeded:', {
-          paymentIntentId: paymentIntent.id,
-          customerId: paymentIntent.customer,
-          amount: paymentIntent.amount,
-          status: paymentIntent.status
-        });
-        
-        await updateSubscriptionStatus(
-          pool,
-          paymentIntent.customer,
-          paymentIntent.metadata.subscriptionId,
-          'active',
-          Math.floor(Date.now() / 1000) + (90 * 24 * 60 * 60)
-        );
+        // Handle successful payment intent
         break;
 
       case 'invoice.paid':
-        const paidInvoice = event.data.object;
-        console.log('[Webhook] Invoice paid:', {
-          invoiceId: paidInvoice.id,
-          customerId: paidInvoice.customer,
-          subscriptionId: paidInvoice.subscription,
-          amount: paidInvoice.amount_paid
-        });
-        
-        await updateSubscriptionStatus(
-          pool,
-          paidInvoice.customer,
-          paidInvoice.subscription,
-          'active',
-          Math.floor(Date.now() / 1000) + (90 * 24 * 60 * 60)
-        );
+        // Handle successful invoice payment
         break;
 
       case 'invoice.payment_failed':
@@ -100,6 +72,8 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
           null
         );
         break;
+
+      // Add other cases as needed
     }
 
     console.log('[Webhook] Successfully processed:', event.type);
@@ -453,6 +427,8 @@ app.post('/api/create-subscription', ensureAuthenticated, async (req, res) => {
       expand: ['latest_invoice.payment_intent'],
       metadata: { userId: req.user.id }
     });
+
+    console.log('[SubscriptionService] Subscription created:', subscription);
 
     // Update user record
     await pool.query(

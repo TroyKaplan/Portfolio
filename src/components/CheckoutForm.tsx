@@ -56,11 +56,14 @@ const CheckoutForm: React.FC = () => {
     setProcessing(true);
 
     if (!stripe || !elements) {
+      console.error('[CheckoutForm] Stripe not initialized');
+      setProcessing(false);
       return;
     }
 
     const cardElement = elements.getElement(CardElement);
     if (!cardElement) {
+      console.error('[CheckoutForm] Card element not found');
       setProcessing(false);
       return;
     }
@@ -72,10 +75,13 @@ const CheckoutForm: React.FC = () => {
       });
 
       if (error) {
+        console.error('[CheckoutForm] Payment method creation error:', error);
         setError(error.message || 'Payment failed');
         setProcessing(false);
         return;
       }
+
+      console.log('[CheckoutForm] Payment method created:', paymentMethod);
 
       const response = await fetch('/api/create-subscription', {
         method: 'POST',
@@ -89,16 +95,19 @@ const CheckoutForm: React.FC = () => {
 
       const data = await response.json();
       
-      if (data.success) {
-        window.location.href = '/games';
+      if (data.error) {
+        console.error('[CheckoutForm] Subscription creation error:', data.error);
+        setError(data.error);
       } else {
-        setError(data.error || 'Subscription failed');
+        console.log('[CheckoutForm] Subscription created successfully:', data);
+        window.location.href = '/games';
       }
     } catch (err) {
+      console.error('[CheckoutForm] Unexpected error:', err);
       setError('Subscription failed. Please try again.');
+    } finally {
+      setProcessing(false);
     }
-
-    setProcessing(false);
   };
 
   return (
