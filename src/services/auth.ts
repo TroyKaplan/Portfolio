@@ -1,55 +1,44 @@
 import axios from 'axios';
-import { DeviceInfo } from '../types/device';
+import { User, AuthError, DeviceInfo } from '../types/auth';
 
-interface AuthError {
-  code?: string;
-  message: string;
-}
-
-const handleError = (error: any): never => {
-  if (error.response?.data?.code === '23505') {
-    // PostgreSQL unique violation error
-    throw new Error('Username already exists');
+const createAuthError = (error: any): AuthError => {
+  if (axios.isAxiosError(error)) {
+    return {
+      code: `AUTH_${error.response?.status || 'UNKNOWN'}`,
+      message: error.response?.data?.message || 'Authentication failed',
+      details: error.response?.data
+    };
   }
-  throw error.response?.data || error;
+  return {
+    code: 'AUTH_UNKNOWN',
+    message: 'An unexpected error occurred',
+    details: error
+  };
 };
 
-const AUTH_API = '/api/auth';
-
-export const login = async (username: string, password: string, deviceInfo: DeviceInfo) => {
+export const getCurrentUser = async (): Promise<{ user: User }> => {
   try {
-    const response = await axios.post(`${AUTH_API}/login`, { username, password, deviceInfo });
-    return response.data;
-  } catch (error) {
-    throw handleError(error);
-  }
-};
-
-export const register = async (username: string, password: string, deviceInfo: DeviceInfo) => {
-  try {
-    const response = await axios.post(`${AUTH_API}/register`, { username, password, deviceInfo });
+    const response = await axios.get('/api/auth/current-user', {
+      withCredentials: true
+    });
     return response.data;
   } catch (error: any) {
-    throw handleError(error);
+    throw createAuthError(error);
   }
 };
 
-export const logout = async () => {
+export const login = async (
+  username: string, 
+  password: string, 
+  deviceInfo: DeviceInfo
+): Promise<{ user: User }> => {
   try {
-    await axios.post(`${AUTH_API}/logout`);
-  } catch (error: any) {
-    throw error.response?.data || error;
-  }
-};
-
-export const getCurrentUser = async () => {
-  try {
-    const response = await axios.get(`${AUTH_API}/current-user`);
+    const response = await axios.post('/api/auth/login', 
+      { username, password, deviceInfo },
+      { withCredentials: true }
+    );
     return response.data;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error.message;
-    }
-    throw 'An unknown error occurred';
+  } catch (error: any) {
+    throw createAuthError(error);
   }
 }; 

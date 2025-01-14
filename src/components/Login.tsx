@@ -1,7 +1,9 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import axios from 'axios';
+import { login } from '../services/auth';
+import ErrorMessage from './shared/ErrorMessage';
+import { AuthError } from '../types/auth';
 import './Login.css';
 
 const Login: React.FC = () => {
@@ -9,7 +11,7 @@ const Login: React.FC = () => {
     username: '',
     password: ''
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const { setUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -17,12 +19,21 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
     try {
-      const response = await axios.post('/api/auth/login', formData);
-      setUser(response.data.user);
+      const deviceInfo = {
+        screenResolution: `${window.screen.width}x${window.screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: navigator.language,
+        userAgent: window.navigator.userAgent
+      };
+
+      const response = await login(formData.username, formData.password, deviceInfo);
+      setUser(response.user);
       navigate(redirectPath);
-    } catch (err) {
-      setError('Invalid credentials');
+    } catch (error: any) {
+      setError(error.message || 'An unexpected error occurred');
     }
   };
 
@@ -51,7 +62,7 @@ const Login: React.FC = () => {
             />
           </div>
 
-          {error && <div className="error-message">{error}</div>}
+          {error && <ErrorMessage error={{ message: error }} onClose={() => setError(null)} />}
           
           <button type="submit" className="submit-button">
             Login

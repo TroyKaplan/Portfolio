@@ -5,6 +5,12 @@ export const checkSubscriptionStatus = async () => {
     const response = await axios.get('/api/subscription/status', {
       withCredentials: true
     });
+    
+    // Don't check subscription status for admin users
+    if (response.data?.role === 'admin') {
+      return { status: 'active', role: 'admin' };
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Failed to check subscription status:', error);

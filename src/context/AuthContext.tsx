@@ -1,12 +1,16 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { getCurrentUser } from '../services/auth';
 import axios from 'axios';
+import { AuthError } from '../types/auth';
 
 interface User {
   id: string;
   username: string;
   role: 'user' | 'subscriber' | 'admin';
   created_at: string;
+  subscription_status?: 'active' | 'inactive' | 'past_due' | 'canceled';
+  subscription_end_date?: string;
+  subscription_start_date?: string;
 }
 
 interface AuthContextType {
@@ -29,12 +33,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initAuth = async () => {
+      const logContext = {
+        timestamp: new Date().toISOString(),
+        component: 'AuthProvider',
+        action: 'initAuth'
+      };
+
+      console.log('Auth initialization started', logContext);
+
       try {
         const data = await getCurrentUser();
+        console.log('Auth initialization successful', {
+          ...logContext,
+          user: {
+            id: data.user?.id,
+            username: data.user?.username,
+            role: data.user?.role
+          }
+        });
         setUser(data.user);
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        const errorDetails = {
+          ...logContext,
+          errorType: error instanceof Error ? error.constructor.name : typeof error,
+          message: error instanceof Error ? error.message : 'Unknown error'
+        };
+
+        if (axios.isAxiosError(error)) {
+          console.error('Auth initialization failed', {
+            ...errorDetails,
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data
+          });
+        } else {
+          console.error('Auth initialization failed', errorDetails);
+        }
       } finally {
+        console.log('Auth initialization completed', logContext);
         setLoading(false);
       }
     };
@@ -45,8 +81,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (user) {
       const heartbeat = setInterval(() => {
-        axios.post('/api/auth/heartbeat').catch(console.error);
-      }, 60000); // Send heartbeat every minute
+        axios.post('/api/auth/heartbeat')
+          .catch(error => {
+            console.error('Heartbeat failed', {
+              timestamp: new Date().toISOString(),
+              component: 'AuthProvider',
+              action: 'heartbeat',
+              error: {
+                type: error instanceof Error ? error.constructor.name : typeof error,
+                message: error instanceof Error ? error.message : 'Unknown error'
+              }
+            });
+          });
+      }, 60000);
 
       return () => clearInterval(heartbeat);
     }

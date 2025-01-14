@@ -107,7 +107,7 @@ const UserProfile: React.FC = () => {
   }
   if (error) {
     console.log('Component in error state:', error);
-    return <ErrorMessage message={error} />;
+    return <ErrorMessage error={{ message: error }} onClose={() => setError(null)} />;
   }
   if (!userProfile) {
     console.log('No user profile data available');

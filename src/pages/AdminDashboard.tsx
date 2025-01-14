@@ -72,10 +72,11 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await axios.get('/api/auth/current-user');
+        const response = await axios.get('/api/auth/current-user', {
+          withCredentials: true
+        });
         if (response.data.user && response.data.user.role === 'admin') {
           setIsAuthenticated(true);
-          // Only fetch data if authenticated
           fetchActiveUsers();
           fetchVisitorStats();
           const fetchUsers = async () => {
@@ -129,18 +130,21 @@ const AdminDashboard: React.FC = () => {
     return null;
   }
 
-  const updateRole = (userId: string, role: 'user' | 'subscriber' | 'admin') => {
-    fetch('/api/update-role', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, role }),
-    })
-      .then(res => res.json())
-      .then(() => {
-        setUsers(prevUsers =>
-          prevUsers.map(user => (user.id === userId ? { ...user, role } : user))
-        );
-      });
+  const updateRole = async (userId: string, role: 'user' | 'subscriber' | 'admin') => {
+    try {
+      const response = await axios.post('/api/update-role', 
+        { userId, role },
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+      setUsers(prevUsers =>
+        prevUsers.map(user => (user.id === userId ? { ...user, role: response.data.role } : user))
+      );
+    } catch (error) {
+      console.error('Error updating role:', error);
+    }
   };
 
   const viewUserDetails = (userId: string) => {
