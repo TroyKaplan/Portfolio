@@ -763,11 +763,7 @@ apiRouter.get('/user/profile', ensureAuthenticated, async (req, res) => {
 // Use the API router with the /api prefix
 app.use('/api', apiRouter);
 
-// Your catch-all route should come after all API routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
-});
-
+// Add this before the catch-all route
 app.get('/api/visitor-stats', ensureRole('admin'), async (req, res) => {
   try {
     // Get current active sessions
@@ -827,101 +823,9 @@ app.get('/api/visitor-stats', ensureRole('admin'), async (req, res) => {
   }
 });
 
-// Add this after your database configuration
-async function scheduleAnalytics() {
-    try {
-        await pool.query('SELECT manage_anonymous_sessions()');
-        console.log('Analytics aggregation completed successfully');
-    } catch (error) {
-        console.error('Error running analytics aggregation:', error);
-    }
-}
-
-// Run once at startup
-scheduleAnalytics();
-
-// Run daily at 3 AM
-setInterval(() => {
-    const now = new Date();
-    if (now.getHours() === 3 && now.getMinutes() === 0) {
-        scheduleAnalytics();
-    }
-}, 60000); // Check every minute
-
-app.get('/api/subscription/status', ensureAuthenticated, async (req, res) => {
-  const logPrefix = '[SubscriptionStatus]';
-  try {
-    const result = await pool.query(
-      `SELECT subscription_status, subscription_end_date, subscription_id, 
-              stripe_customer_id, role
-       FROM users WHERE id = $1`,
-      [req.user.id]
-    );
-    
-    const userData = result.rows[0];
-    console.log(`${logPrefix} Database subscription data:`, userData);
-
-    if (userData.stripe_customer_id && userData.subscription_id) {
-      try {
-        const stripeSubscription = await stripe.subscriptions.retrieve(userData.subscription_id);
-        console.log(`${logPrefix} Stripe subscription data:`, stripeSubscription);
-        
-        const now = Math.floor(Date.now() / 1000);
-        const shouldBeSubscriber = (
-          stripeSubscription.status === 'active' || 
-          (stripeSubscription.status === 'canceled' && stripeSubscription.current_period_end > now)
-        );
-
-        if (stripeSubscription.status !== userData.subscription_status || 
-            (shouldBeSubscriber && userData.role !== 'subscriber')) {
-          console.log(`${logPrefix} Updating subscription status and role`);
-          
-          await pool.query(
-            `UPDATE users 
-             SET subscription_status = $1,
-                 role = CASE 
-                   WHEN $4 THEN 'subscriber'
-                   ELSE 'user'
-                 END,
-                 subscription_end_date = to_timestamp($2)
-             WHERE stripe_customer_id = $3
-             RETURNING role, subscription_status`,
-            [
-              stripeSubscription.status,
-              stripeSubscription.current_period_end,
-              userData.stripe_customer_id,
-              shouldBeSubscriber
-            ]
-          );
-
-          userData.subscription_status = stripeSubscription.status;
-          userData.role = shouldBeSubscriber ? 'subscriber' : 'user';
-          userData.subscription_end_date = new Date(stripeSubscription.current_period_end * 1000);
-        }
-      } catch (stripeError) {
-        console.error(`${logPrefix} Stripe error:`, stripeError);
-        if (stripeError.code === 'resource_missing') {
-          console.log(`${logPrefix} Subscription not found in Stripe, marking as inactive`);
-          await pool.query(
-            `UPDATE users 
-             SET subscription_status = 'inactive',
-                 role = 'user',
-                 subscription_id = NULL,
-                 subscription_end_date = NULL
-             WHERE stripe_customer_id = $1`,
-            [userData.stripe_customer_id]
-          );
-          userData.subscription_status = 'inactive';
-          userData.role = 'user';
-        }
-      }
-    }
-
-    res.json(userData);
-  } catch (error) {
-    console.error(`${logPrefix} Error:`, error);
-    res.status(500).json({ message: 'Error checking subscription status' });
-  }
+// Your catch-all route should come after all API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 // Add email update endpoint
