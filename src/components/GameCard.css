@@ -1,5 +1,5 @@
 .game-card {
-    background-color: var(--card-background-color);
+    background-color: var(--card-inner-background);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     overflow: hidden;
@@ -49,7 +49,7 @@
 }
 
 h3 {
-    color: var(--text-color);
+    color: var(--pure-white);
     margin: 10px 0;
 }
 
@@ -65,9 +65,85 @@ h3 {
 }
 
 .description-box p {
-    color: var(--text-color);
+    color: var(--pure-white);
     font-size: 0.9em;
     margin: 0;
+}
+
+/* Add styles for locked games */
+.game-card.locked {
+  position: relative;
+  opacity: 0.7;
+}
+
+.lock-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--pure-white);
+}
+
+.login-text {
+    padding: 8px 16px;
+    border: 2px solid #00ff00;
+    border-radius: var(--radius-sm);
+    color: #00ff00;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.locked {
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+.locked:hover {
+  opacity: 1;
+}
+
+.play-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.game-card:hover .play-overlay {
+    opacity: 1;
+}
+
+.server-status-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.server-status-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px 0;
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
 }
 
 

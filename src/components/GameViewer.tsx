@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import './GameViewer.css'; // Import CSS for styling
+import './GameViewer.css';
 
 interface GameViewerProps {
     gamePath: string;
@@ -14,12 +14,6 @@ const GameViewer: React.FC<GameViewerProps> = ({ gamePath, instructions, onClose
     const toggleInstructions = () => {
         setIsInstructionsVisible(!isInstructionsVisible);
     };
-
-    useEffect(() => {
-        if (isInstructionsVisible && instructionsRef.current) {
-            instructionsRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [isInstructionsVisible]);
 
     return (
         <div className="game-viewer">

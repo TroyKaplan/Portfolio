@@ -1,76 +1,80 @@
-/* Define default theme variables */
 :root {
-  --background-color: #ffffff;
-  --text-color: #000000;
-  --primary-color: #007bff;
-  --secondary-color: #6c757d;
-  --link-color: #007bff;
-  --nav-background-color: #343a40;
-  --nav-text-color: #ffffff;
-  --footer-background-color: #f8f9fa;
-  --footer-text-color: #212529;
-  --card-background-color: #f8f8f8;
-  --border-color: #ddd;
-  --play-button-background: rgba(0, 128, 0, 0.7);
-  --table-header-bg: #f4f4f4;
-  --table-stripe-bg: #f8f8f8;
-  --table-hover-bg: #f0f0f0;
-  --table-text-color: #000000;
+  /* Base Colors */
+  --primary-blue: #007AFF;
+  --secondary-blue: #0056b3;
+  --midnight-blue: #1a1f3c;
+  --pure-black: #000000;
+  --off-white: #f8f9fa;
+  --pure-white: #ffffff;
+  --neon-blue: #00b3ff;
+  
+  /* Theme Colors - Light */
+  --background-color: var(--off-white);
+  --card-background: var(--pure-white);
+  --text-primary: #1a1f3c;
+  --text-secondary: #4a5568;
+  --border-color: #e2e8f0;
+  --hover-color: rgba(0, 122, 255, 0.1);
+  --heading-color: var(--midnight-blue);
+  
+  /* Functional Colors */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
 }
 
-/* Dark theme variables */
+/* Dark Theme Override */
 [data-theme='dark'] {
-  --background-color: #121212;
-  --text-color: #e0e0e0;
-  --primary-color: #bb86fc;
-  --secondary-color: #03dac6;
-  --link-color: #bb86fc;
-  --nav-background-color: #1f1f1f;
-  --nav-text-color: #e0e0e0;
-  --footer-background-color: #1f1f1f;
-  --footer-text-color: #e0e0e0;
-  --card-background-color: #1f1f1f;
-  --border-color: #444;
-  --play-button-background: rgba(0, 128, 0, 0.7); /* Adjust if needed */
-  --table-header-bg: #2a2a2a;
-  --table-stripe-bg: #252525;
-  --table-hover-bg: #303030;
-  --table-text-color: #e0e0e0;
+  --background-color: var(--pure-black);
+  --card-background: #111111;
+  --text-primary: var(--pure-white);
+  --text-secondary: #90caf9;
+  --border-color: #333333;
+  --hover-color: rgba(0, 179, 255, 0.1);
+  --heading-color: var(--neon-blue);
 }
 
-/* Apply the variables to global styles */
+/* Global Styles */
 body {
   background-color: var(--background-color);
-  color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  color: var(--text-primary);
+  transition: background-color var(--transition-normal),
+              color var(--transition-normal);
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
 }
 
-/* Links */
-a {
-  color: var(--link-color);
+h1, h2, h3, h4, h5, h6 {
+  color: var(--heading-color);
 }
 
-/* Navbar */
-.navbar {
-  background-color: var(--nav-background-color);
-  color: var(--nav-text-color);
+/* Card Component Base */
+.card {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Footer */
-.footer {
-  flex-shrink: 0;
-  background-color: var(--footer-background-color);
-  color: var(--footer-text-color);
-}
-
-/* Add these styles at the end of your existing App.css */
-.app-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.content-wrapper {
-  flex: 1 0 auto;
-  padding-bottom: 60px; /* Adjust this value based on your footer's height */
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
 }

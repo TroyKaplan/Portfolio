@@ -85,6 +85,7 @@ const GamesPage: React.FC = () => {
                                         description={game.description}
                                         thumbnail={game.thumbnail}
                                         onClick={() => handleGameClick(game.id)}
+                                        access={game.access}
                                     />
                                 ))}
                             </div>
@@ -103,6 +104,7 @@ const GamesPage: React.FC = () => {
                                         description={game.description}
                                         thumbnail={game.thumbnail}
                                         onClick={() => handleGameClick(game.id)}
+                                        access={game.access}
                                     />
                                 ))}
                             </div>

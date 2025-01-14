@@ -1,0 +1,53 @@
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  font-size: 1.2rem;
+  color: var(--text-color-secondary);
+}
+
+.error-message {
+  color: #ff4444;
+  margin: 10px 0;
+  padding: 10px;
+  background-color: rgba(255, 68, 68, 0.1);
+  border-radius: 4px;
+  text-align: center;
+}
+
+.back-button {
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: var(--primary-color-dark);
+}
+
+.card {
+  background-color: var(--card-background-color);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  text-transform: capitalize;
+} 

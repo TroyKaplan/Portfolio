@@ -9,6 +9,7 @@ export interface Game {
     instructions: string;
     isMultiplayer?: boolean;
     serverType?: 'wolfscape' | 'rocketGame';
+    access: 'public' | 'subscriber';
 }
 
 const multiplayerGames: Game[] = [
@@ -21,6 +22,7 @@ const multiplayerGames: Game[] = [
         instructions: 'Click.',
         isMultiplayer: true,
         serverType: 'wolfscape',
+        access: 'public',
     },
     {
         id: 'RocketGame',
@@ -31,8 +33,8 @@ const multiplayerGames: Game[] = [
         instructions: 'Use A and D keys to rotate. Press W to fly',
         isMultiplayer: true,
         serverType: 'rocketGame',
-    },
-    //add more
+        access: 'subscriber',
+    }
 ];
 const gameMakerGames: Game[] = [
     {
@@ -43,6 +45,7 @@ const gameMakerGames: Game[] = [
         path: `${process.env.PUBLIC_URL}/assets/games/tdrl-html5/index.html`,
         instructions: 'Use WASD to move. Left-click to attack. Explore the dungeon and defeat enemies.',
         isMultiplayer: false,
+        access: 'public',
     },
     {
         id: 'MainQuest2',
@@ -51,6 +54,7 @@ const gameMakerGames: Game[] = [
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/MainQuest2NewThumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/MainQuest2/index.html`,
         instructions: 'Use arrow keys to move. Press spacebar to jump. Collect coins and avoid obstacles.',
+        access: 'public',
     },
     {
         id: 'CoopAdventure',
@@ -60,6 +64,7 @@ const gameMakerGames: Game[] = [
         path: `${process.env.PUBLIC_URL}/assets/games/CoopAdventure/index.html`,
         instructions: 'Use WASD to move. Left/Right-click to attack. 1 and 2 to switch camera views. Arrow keys to move second player',
         isMultiplayer: false,
+        access: 'public',
     },
     {
         id: 'CompMultiplayerUCCS',
@@ -69,6 +74,7 @@ const gameMakerGames: Game[] = [
         path: `${process.env.PUBLIC_URL}/assets/games/CompetitiveMultiplayerUCCS/index.html`,
         instructions: 'WASD and left control for left plane, arrow keys and right control for right plane, maybe shift.',
         isMultiplayer: false,
+        access: 'public',
     },
     //add more
 ];
@@ -81,6 +87,7 @@ const godotGames: Game[] = [
         path: `${process.env.PUBLIC_URL}/assets/games/PongGodot/index.html`,
         instructions: 'Use arrow keys to move right paddle. W and S to move paddle up and down.',
         isMultiplayer: false,
+        access: 'subscriber',
     },
     //add more
 ];

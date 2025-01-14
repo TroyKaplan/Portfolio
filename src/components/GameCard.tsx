@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import './GameCard.css';
 import ServerStatus from './ServerStatus';
+import { AuthContext } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { FaLock, FaPlay, FaTimes } from 'react-icons/fa';
 
 interface GameCardProps {
     title: string;
     description: string;
     thumbnail: string;
     onClick: () => void;
+    access?: 'public' | 'subscriber';
     isMultiplayer?: boolean;
     serverType?: 'wolfscape' | 'rocketGame';
 }
@@ -16,26 +20,69 @@ const GameCard: React.FC<GameCardProps> = ({
     description, 
     thumbnail, 
     onClick,
-    isMultiplayer,
-    serverType 
+    access = 'public',
+    isMultiplayer = false,
+    serverType
 }) => {
+    const { user } = useContext(AuthContext);
+    const navigate = useNavigate();
+
+    const canPlay =
+        (access === 'public' && !isMultiplayer) ||
+        (user && isMultiplayer) ||
+        (user && access === 'subscriber' && (user.role === 'subscriber' || user.role === 'admin'));
+
+    const handleClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (!canPlay) {
+            if (access === 'subscriber') {
+                navigate(user ? '/subscribe' : '/login?redirect=/subscribe');
+            } else {
+                navigate('/login');
+            }
+        } else {
+            onClick();
+        }
+    };
+
     return (
-        <div className="game-card" onClick={onClick}>
+        <div className="game-card" onClick={handleClick} role="button" tabIndex={0}>
             <div className="thumbnail-wrapper">
                 <img src={thumbnail} alt={`${title} Thumbnail`} />
-                <div className="play-button">
-                    <span>&#x27A4;</span>
-                </div>
+                {isMultiplayer ? (
+                    canPlay ? (
+                        <div className="play-overlay">
+                            <FaPlay size={48} color="#4CAF50" />
+                        </div>
+                    ) : (
+                        <div className="lock-overlay">
+                            <FaTimes size={48} color="red" />
+                        </div>
+                    )
+                ) : (
+                    access === 'subscriber' && !canPlay ? (
+                        <div className="lock-overlay">
+                            <FaLock size={48} />
+                        </div>
+                    ) : (
+                        <div className="play-overlay">
+                            <FaPlay size={48} color="#4CAF50" />
+                        </div>
+                    )
+                )}
             </div>
             <h3>{title}</h3>
-            <div className="description-box">
-                <div>
-                    <p>{description}</p>
-                    {isMultiplayer && serverType && (
-                        <ServerStatus serverType={serverType} />
-                    )}
+            <p>{description}</p>
+            {isMultiplayer && serverType && (
+                <div className="server-status-container">
+                    <ServerStatus serverType={serverType} />
                 </div>
-            </div>
+            )}
+            {!canPlay && (
+                <div className="subscription-notice">
+                    {user ? 'Subscribe to Play' : 'Login to Play'}
+                </div>
+            )}
         </div>
     );
 };

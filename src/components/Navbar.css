@@ -1,7 +1,9 @@
+@import '../styles/shared.css';
+
 .navbar {
-    background-color: var(--nav-background-color);
-    color: var(--nav-text-color);
-    padding: 0.5rem 1rem;
+    background-color: var(--card-background);
+    padding: var(--spacing-md) var(--spacing-xl);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -14,30 +16,66 @@
 }
 
 .nav-links a {
-    color: var(--nav-text-color);
+    color: var(--text-primary);
     text-decoration: none;
-    margin-left: 1rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    transition: background-color var(--transition-fast);
 }
 
 .nav-links a.active {
-    text-decoration: underline;
+    color: var(--primary-blue);
+    font-weight: 500;
 }
 
 .nav-links a:hover {
-    color: var(--primary-color);
+    background-color: var(--hover-color);
 }
 
 .theme-toggle-button {
     background: none;
     border: none;
-    font-size: 1.5rem;
-    margin-left: 1rem;
+    padding: var(--spacing-sm);
+    font-size: 1.2rem;
     cursor: pointer;
-    color: inherit;
+    color: var(--text-primary);
+    transition: transform var(--transition-fast);
 }
 
-.theme-toggle-button:focus {
-    outline: none;
+.theme-toggle-button:hover {
+    transform: scale(1.1);
 }
 
-/* Adjust styles as needed */
+/* User Profile Link */
+.user-profile-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.username {
+    font-weight: 600;
+}
+
+.role-badge {
+    font-size: 0.7em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+/* Role Badge Colors */
+.role-badge.admin {
+    background-color: #ff4444;
+    color: white;
+}
+
+.role-badge.subscriber {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.role-badge.user {
+    background-color: #2196F3;
+    color: white;
+}

@@ -1,7 +1,9 @@
 // GalleryViewer.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GalleryItem, MediaItem } from '../data/galleryItems';
 import './GalleryViewer.css';
+import logger from '../utils/logger';
+import { useDeviceInfo } from '../hooks/useDeviceInfo';
 
 interface GalleryViewerProps {
     item: GalleryItem;
@@ -10,7 +12,19 @@ interface GalleryViewerProps {
 
 const GalleryViewer: React.FC<GalleryViewerProps> = ({ item, onClose }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
+    const deviceClass = useDeviceInfo();
     const mediaItems = item.media;
+
+    useEffect(() => {
+        logger.log('info', 'GalleryViewer', 'Media rendered with device class:', {
+            deviceClass,
+            mediaType: item.media[currentIndex].type,
+            dimensions: {
+                containerWidth: document.querySelector('.media-container')?.clientWidth,
+                containerHeight: document.querySelector('.media-container')?.clientHeight
+            }
+        });
+    }, [deviceClass, currentIndex, item.media]);
 
     const handlePrev = () => {
         setCurrentIndex((prevIndex) => (prevIndex - 1 + mediaItems.length) % mediaItems.length);
@@ -21,6 +35,12 @@ const GalleryViewer: React.FC<GalleryViewerProps> = ({ item, onClose }) => {
     };
 
     const renderMedia = (media: MediaItem) => {
+        logger.log('debug', 'GalleryViewer', 'Rendering media:', {
+            type: media.type,
+            source: media.source,
+            deviceClass
+        });
+        
         switch (media.type) {
             case 'image':
                 return <img key={media.source} src={media.source} alt={item.title} />;
@@ -55,6 +75,30 @@ const GalleryViewer: React.FC<GalleryViewerProps> = ({ item, onClose }) => {
         }
     };
 
+    const getOptimizedImageSource = (source: string, deviceClass: string) => {
+        // If the image is from a CDN or service that supports dynamic resizing
+        if (source.includes('imagecdn.com')) {
+            return source;
+        }
+        
+        // For local images, we'll need to handle different sizes
+        const basePath = source.split('?')[0];
+        
+        switch (deviceClass) {
+            case 'high-res':
+                return `${basePath}?quality=90&w=1920`;
+            case 'standard':
+                return `${basePath}?quality=85&w=1200`;
+            case 'tablet':
+                return `${basePath}?quality=80&w=900`;
+            case 'mobile':
+            case 'mobile-landscape':
+                return `${basePath}?quality=75&w=600`;
+            default:
+                return source;
+        }
+    };
+
     const isEmbedVideo = (source: string) => {
         return source.includes('youtube.com') || source.includes('youtu.be') || source.includes('vimeo.com');
     };
@@ -64,7 +108,7 @@ const GalleryViewer: React.FC<GalleryViewerProps> = ({ item, onClose }) => {
             <button className="close-button" onClick={onClose} aria-label="Close Viewer">
                 &times;
             </button>
-            <div className="viewer-content">
+            <div className={`viewer-content ${deviceClass}`}>
                 <h2>{item.title}</h2>
                 {item.repositoryLink && (
                     <p>
