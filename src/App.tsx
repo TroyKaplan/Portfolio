@@ -17,6 +17,7 @@ import Register from './components/Register';
 import { AuthProvider } from './context/AuthContext';
 import UserProfile from './pages/UserProfile';
 import UserDetails from './pages/UserDetails';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
     return (
@@ -46,7 +47,9 @@ function App() {
                                     path="/profile" 
                                     element={
                                         <PrivateRoute>
-                                            <UserProfile />
+                                            <ErrorBoundary>
+                                                <UserProfile />
+                                            </ErrorBoundary>
                                         </PrivateRoute>
                                     } 
                                 />

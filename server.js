@@ -630,43 +630,19 @@ const apiRouter = express.Router();
 
 // Move the profile endpoint to use the router
 apiRouter.get('/user/profile', ensureAuthenticated, async (req, res) => {
-  console.log('API endpoint hit: /api/user/profile');
-  console.log('Request headers:', req.headers);
-  console.log('User ID:', req.user.id);
-  
   try {
     console.log('Fetching profile for user:', req.user.id);
     const userResult = await pool.query(
       `SELECT 
-        u.id,
-        u.username,
-        u.email,
-        u.role,
-        u.created_at,
-        u.subscription_status,
-        u.subscription_id,
-        u.subscription_end_date,
-        u.stripe_customer_id,
-        u.last_login,
-        u.total_time_spent,
-        COALESCE(SUM(g.playtime), 0) as total_playtime,
-        COALESCE(json_agg(DISTINCT a.*) FILTER (WHERE a.id IS NOT NULL), '[]') as achievements
-      FROM users u
-      LEFT JOIN game_stats g ON u.id = g.user_id
-      LEFT JOIN achievements a ON u.id = a.user_id
-      WHERE u.id = $1
-      GROUP BY 
-        u.id, 
-        u.username,
-        u.email,
-        u.role,
-        u.created_at,
-        u.subscription_status,
-        u.subscription_id,
-        u.subscription_end_date,
-        u.stripe_customer_id,
-        u.last_login,
-        u.total_time_spent`,
+        username,
+        email,
+        role,
+        subscription_status,
+        subscription_start_date,
+        subscription_end_date,
+        total_time_spent
+      FROM users 
+      WHERE id = $1`,
       [req.user.id]
     );
 
@@ -675,16 +651,10 @@ apiRouter.get('/user/profile', ensureAuthenticated, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const userData = userResult.rows[0];
-    console.log('Profile data retrieved:', userData);
-    
-    // Ensure proper headers are set
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Cache-Control', 'no-store');
-    return res.json(userData);
+    console.log('Profile data retrieved:', userResult.rows[0]);
+    res.json(userResult.rows[0]);
   } catch (error) {
     console.error('Profile fetch error:', error);
-    console.error('Stack trace:', error.stack);
     res.status(500).json({ message: 'Error fetching profile data' });
   }
 });
@@ -889,20 +859,3 @@ app.post('/api/user/change-password', ensureAuthenticated, async (req, res) => {
     res.status(500).json({ message: 'Error changing password' });
   }
 });
-
-// Add this route for development environment only
-if (process.env.NODE_ENV === 'development') {
-  app.get('/api/user/profile', (req, res) => {
-    res.json({
-      user: {
-        username: "TestUser",
-        email: "test@example.com",
-        role: "user",
-        subscription_status: "pending",
-        subscription_start_date: "2024-01-14T00:00:00.000Z",
-        subscription_end_date: null,
-        total_time_spent: 7384 // This will show as "2h 3m"
-      }
-    });
-  });
-}

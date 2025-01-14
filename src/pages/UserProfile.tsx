@@ -51,6 +51,9 @@ const UserProfile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('UserProfile component mounted');
+    console.log('Initial state:', { userProfile, isLoading, error });
+    
     fetchProfileData();
   }, []);
 
@@ -73,7 +76,7 @@ const UserProfile: React.FC = () => {
       
       const data = await response.json();
       console.log('Profile data received:', data);
-      setUserProfile(data.user);
+      setUserProfile(data);
     } catch (err) {
       console.error('Profile fetch error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -105,9 +108,20 @@ const UserProfile: React.FC = () => {
     console.log('Change password clicked');
   };
 
-  if (isLoading) return <LoadingState />;
-  if (error) return <ErrorMessage error={{ message: error }} onClose={() => setError(null)} />;
-  if (!userProfile) return null;
+  if (isLoading) {
+    console.log('Rendering loading state');
+    return <LoadingState />;
+  }
+  if (error) {
+    console.log('Rendering error state:', error);
+    return <ErrorMessage error={{ message: error }} onClose={() => setError(null)} />;
+  }
+  if (!userProfile) {
+    console.log('No user profile data available');
+    return null;
+  }
+
+  console.log('Rendering user profile:', userProfile);
 
   const subscriptionStatus = getSubscriptionStatus(userProfile.subscription_status);
 
