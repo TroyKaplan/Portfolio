@@ -58,37 +58,6 @@ const UserProfile: React.FC = () => {
     fetchProfileData();
   }, [navigate]);
 
-  if (isLoading) {
-    console.log('Component in loading state');
-    return <LoadingState />;
-  }
-  if (error) {
-    console.log('Component in error state:', error);
-    return <ErrorMessage error={{ message: error }} onClose={() => setError(null)} />;
-  }
-  if (!userProfile) {
-    console.log('No user profile data available');
-    return null;
-  }
-
-  console.log('Rendering profile with data:', {
-    basicInfo: {
-      username: userProfile.username,
-      email: userProfile.email,
-      role: userProfile.role,
-      created: userProfile.created_at
-    },
-    subscription: {
-      status: userProfile.subscription_status,
-      endDate: userProfile.subscription_end_date,
-      startDate: userProfile.subscription_start_date
-    },
-    stats: {
-      totalPlaytime: userProfile.total_playtime,
-      achievements: userProfile.achievements?.length || 0
-    }
-  });
-
   const getSubscriptionStatus = (status: string): SubscriptionStatus => {
     console.log('[UserProfile] Getting status for:', status);
     
@@ -108,107 +77,86 @@ const UserProfile: React.FC = () => {
     return result;
   };
 
-  const subscriptionStatus = getSubscriptionStatus(userProfile?.subscription_status || 'unknown');
+  if (isLoading) {
+    console.log('Component in loading state');
+    return <LoadingState />;
+  }
+
+  if (error) {
+    console.log('Component in error state:', error);
+    return <ErrorMessage error={{ message: error }} onClose={() => setError(null)} />;
+  }
+
+  if (!userProfile) {
+    console.log('No user profile data available');
+    return null;
+  }
+
+  const subscriptionStatus = getSubscriptionStatus(userProfile.subscription_status);
+  console.log('[UserProfile] Final subscription status:', subscriptionStatus);
 
   return (
-    <div className="user-profile-page">
-      <div className="header-section">
-        <button onClick={() => navigate(-1)} className="back-button">
-          ← Back
-        </button>
-        <h1>User Profile</h1>
+    <div className="profile-container">
+      <h2>User Profile</h2>
+      
+      <div className="profile-section">
+        <h3>Basic Information</h3>
+        <p>Username: {userProfile.username}</p>
+        <p>Email: {userProfile.email}</p>
+        <p>Role: {userProfile.role}</p>
       </div>
 
-      <div className="profile-grid">
-        <div className="profile-card basic-info">
-          <h2>Basic Information</h2>
-          <div className="stat-item">
-            <span>Username</span>
-            <span>{userProfile.username}</span>
-          </div>
-          <div className="stat-item">
-            <span>Email</span>
-            <span>{userProfile.email || 'Not provided'}</span>
-          </div>
-          <div className="stat-item">
-            <span>Role</span>
-            <span className={`role-badge ${userProfile.role}`}>
-              {userProfile.role}
-            </span>
-          </div>
-          <div className="stat-item">
-            <span>Member Since</span>
-            <span>{new Date(userProfile.created_at).toLocaleDateString()}</span>
-          </div>
-          <div className="stat-item">
-            <span>Last Login</span>
-            <span>{userProfile.last_login ? 
-              new Date(userProfile.last_login).toLocaleString() : 
-              'Never'}</span>
-          </div>
-          <div className="stat-item">
-            <span>Total Time Spent</span>
-            <span>{userProfile.total_time_spent ? 
-              `${Math.floor(userProfile.total_time_spent / 3600)}h ${Math.floor((userProfile.total_time_spent % 3600) / 60)}m` : 
-              '0h 0m'}</span>
-          </div>
-        </div>
+      <div className="profile-section">
+        <h3>Subscription Details</h3>
+        <p>Status: <span style={{ 
+          color: subscriptionStatus.color,
+          fontWeight: 'bold',
+          padding: '4px 8px',
+          borderRadius: '4px',
+          backgroundColor: `${subscriptionStatus.color}20` // 20 is hex for 12% opacity
+        }}>
+          {subscriptionStatus.label}
+        </span></p>
+        {userProfile.subscription_start_date && (
+          <p>Start Date: {new Date(userProfile.subscription_start_date).toLocaleDateString()}</p>
+        )}
+        {userProfile.subscription_end_date && (
+          <p>End Date: {new Date(userProfile.subscription_end_date).toLocaleDateString()}</p>
+        )}
+      </div>
 
-        <div className="profile-card account-actions">
-          <h2>Account Actions</h2>
-          <ProfileActions 
-            email={userProfile.email} 
-            onEmailUpdate={(newEmail) => {
-              setUserProfile({
-                ...userProfile,
-                email: newEmail
-              });
-            }}
-          />
-        </div>
-
-        <div className="profile-card subscription-info">
-          <h2>Subscription Status</h2>
-          <div className="stat-item">
-            <span>Status</span>
-            <span className={`status-badge ${userProfile.subscription_status}`}>
-              {userProfile.subscription_status === 'active' ? 'Active' :
-               userProfile.subscription_status === 'canceling' ? 'Canceling' :
-               'Inactive'}
-            </span>
-          </div>
-          <div className="stat-item">
-            <span>Start Date</span>
-            <span>
-              {userProfile.subscription_start_date ? 
-                new Date(userProfile.subscription_start_date).toLocaleDateString() : 
-                'N/A'}
-            </span>
-          </div>
-          <div className="stat-item">
-            <span>End Date</span>
-            <span>
-              {userProfile.subscription_end_date ? 
-                new Date(Number(userProfile.subscription_end_date) * 1000).toLocaleDateString() : 
-                'N/A'}
-            </span>
-          </div>
-        </div>
-
-        <div className="profile-card gaming-stats">
-          <h2>Gaming Statistics</h2>
-          <div className="stat-item">
-            <span>Total Playtime</span>
-            <span>{Math.floor((userProfile.total_playtime || 0) / 3600)}h {Math.floor(((userProfile.total_playtime || 0) % 3600) / 60)}m</span>
-          </div>
-          <div className="stat-item">
-            <span>Achievements</span>
-            <span>{userProfile.achievements?.length || 0}</span>
-          </div>
-        </div>
+      <div className="profile-section">
+        <h3>Statistics</h3>
+        <p>Total Time Spent: {userProfile.total_time_spent || 0} seconds</p>
       </div>
     </div>
   );
 };
+
+// Add some basic styles
+const styles = `
+.profile-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.profile-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+}
+
+.profile-section h3 {
+  margin-top: 0;
+  color: #333;
+}
+`;
+
+// Add styles to document
+const styleSheet = document.createElement("style");
+styleSheet.innerText = styles;
+document.head.appendChild(styleSheet);
 
 export default UserProfile; 
