@@ -40,89 +40,64 @@ async function updateSubscriptionStatus(pool, customerId, subscriptionId, status
 // Webhook handler
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
+  const logPrefix = '[Webhook]';
   let event;
 
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-    console.log('[Webhook] Received event:', event.type, 'Event ID:', event.id);
+    console.log(`${logPrefix} Received event:`, event.type);
 
     switch (event.type) {
-      case 'payment_intent.succeeded':
-        const paymentIntent = event.data.object;
-        console.log('[Webhook] Payment succeeded:', {
-          paymentIntentId: paymentIntent.id,
-          customerId: paymentIntent.customer,
-          subscriptionId: paymentIntent.metadata.subscriptionId
-        });
-
-        // Update subscription status to active
-        await updateSubscriptionStatus(
-          pool,
-          paymentIntent.customer,
-          paymentIntent.metadata.subscriptionId,
-          'active',
-          null // Set the end date if needed
-        );
-        break;
-
-      case 'invoice.paid':
-        const paidInvoice = event.data.object;
-        console.log('[Webhook] Invoice paid:', {
-          invoiceId: paidInvoice.id,
-          customerId: paidInvoice.customer,
-          subscriptionId: paidInvoice.subscription
-        });
-
-        // Update subscription status for recurring payments
-        await updateSubscriptionStatus(
-          pool,
-          paidInvoice.customer,
-          paidInvoice.subscription,
-          'active',
-          null // Set the end date if needed
-        );
-        break;
-
-      case 'invoice.payment_failed':
-        const failedInvoice = event.data.object;
-        console.log('[Webhook] Payment failed:', {
-          invoiceId: failedInvoice.id,
-          customerId: failedInvoice.customer,
-          subscriptionId: failedInvoice.subscription
-        });
-
-        await updateSubscriptionStatus(
-          pool,
-          failedInvoice.customer,
-          failedInvoice.subscription,
-          'incomplete',
-          null
-        );
-        break;
-
       case 'invoice.payment_succeeded':
         const invoice = event.data.object;
-        // Update subscription status and role
+        console.log(`${logPrefix} Processing payment success for customer:`, invoice.customer);
+        
+        // Update user role and subscription status immediately
         await pool.query(
           `UPDATE users 
-           SET subscription_status = $1, 
-               role = 'subscriber' 
-           WHERE stripe_customer_id = $2`,
-          ['active', invoice.customer]
+           SET subscription_status = 'active',
+               role = 'subscriber',
+               subscription_end_date = to_timestamp($1),
+               subscription_start_date = to_timestamp($2)
+           WHERE stripe_customer_id = $3`,
+          [
+            invoice.lines.data[0].period.end,
+            invoice.lines.data[0].period.start,
+            invoice.customer
+          ]
         );
         break;
 
-      // Add other cases as needed
+      case 'customer.subscription.deleted':
+        const subscription = event.data.object;
+        console.log(`${logPrefix} Processing subscription deletion for:`, subscription.customer);
+        
+        // Calculate remaining time and update user status
+        const now = Math.floor(Date.now() / 1000);
+        const endTime = subscription.current_period_end;
+        const hasRemainingTime = endTime > now;
+
+        await pool.query(
+          `UPDATE users 
+           SET subscription_status = $1,
+               role = CASE 
+                 WHEN $2 > extract(epoch from now()) THEN 'subscriber'
+                 ELSE 'user'
+               END,
+               subscription_end_date = to_timestamp($2)
+           WHERE stripe_customer_id = $3`,
+          [
+            hasRemainingTime ? 'canceled' : 'inactive',
+            endTime,
+            subscription.customer
+          ]
+        );
+        break;
     }
 
-    console.log('[Webhook] Successfully processed:', event.type);
     res.json({ received: true });
   } catch (error) {
-    console.error('[Webhook] Error:', {
-      message: error.message,
-      type: error.type,
-      stack: error.stack
-    });
+    console.error(`${logPrefix} Error:`, error);
     res.status(400).send(`Webhook Error: ${error.message}`);
   }
 });
@@ -814,7 +789,8 @@ app.get('/api/subscription/status', ensureAuthenticated, async (req, res) => {
   const logPrefix = '[SubscriptionStatus]';
   try {
     const result = await pool.query(
-      `SELECT subscription_status, subscription_end_date, subscription_id, stripe_customer_id 
+      `SELECT subscription_status, subscription_end_date, subscription_id, 
+              stripe_customer_id, role
        FROM users WHERE id = $1`,
       [req.user.id]
     );
@@ -827,29 +803,53 @@ app.get('/api/subscription/status', ensureAuthenticated, async (req, res) => {
         const stripeSubscription = await stripe.subscriptions.retrieve(userData.subscription_id);
         console.log(`${logPrefix} Stripe subscription data:`, stripeSubscription);
         
-        if (stripeSubscription.status !== userData.subscription_status) {
-          console.log(`${logPrefix} Updating out-of-sync subscription status from ${userData.subscription_status} to ${stripeSubscription.status}`);
-          await updateSubscriptionStatus(
-            pool,
-            userData.stripe_customer_id,
-            userData.subscription_id,
-            stripeSubscription.status,
-            stripeSubscription.current_period_end
+        const now = Math.floor(Date.now() / 1000);
+        const shouldBeSubscriber = (
+          stripeSubscription.status === 'active' || 
+          (stripeSubscription.status === 'canceled' && stripeSubscription.current_period_end > now)
+        );
+
+        if (stripeSubscription.status !== userData.subscription_status || 
+            (shouldBeSubscriber && userData.role !== 'subscriber')) {
+          console.log(`${logPrefix} Updating subscription status and role`);
+          
+          await pool.query(
+            `UPDATE users 
+             SET subscription_status = $1,
+                 role = CASE 
+                   WHEN $4 THEN 'subscriber'
+                   ELSE 'user'
+                 END,
+                 subscription_end_date = to_timestamp($2)
+             WHERE stripe_customer_id = $3
+             RETURNING role, subscription_status`,
+            [
+              stripeSubscription.status,
+              stripeSubscription.current_period_end,
+              userData.stripe_customer_id,
+              shouldBeSubscriber
+            ]
           );
+
           userData.subscription_status = stripeSubscription.status;
+          userData.role = shouldBeSubscriber ? 'subscriber' : 'user';
+          userData.subscription_end_date = new Date(stripeSubscription.current_period_end * 1000);
         }
       } catch (stripeError) {
         console.error(`${logPrefix} Stripe error:`, stripeError);
         if (stripeError.code === 'resource_missing') {
           console.log(`${logPrefix} Subscription not found in Stripe, marking as inactive`);
-          await updateSubscriptionStatus(
-            pool,
-            userData.stripe_customer_id,
-            null,
-            'inactive',
-            null
+          await pool.query(
+            `UPDATE users 
+             SET subscription_status = 'inactive',
+                 role = 'user',
+                 subscription_id = NULL,
+                 subscription_end_date = NULL
+             WHERE stripe_customer_id = $1`,
+            [userData.stripe_customer_id]
           );
           userData.subscription_status = 'inactive';
+          userData.role = 'user';
         }
       }
     }
@@ -857,7 +857,7 @@ app.get('/api/subscription/status', ensureAuthenticated, async (req, res) => {
     res.json(userData);
   } catch (error) {
     console.error(`${logPrefix} Error:`, error);
-    res.status(500).json({ error: 'Failed to check subscription status' });
+    res.status(500).json({ message: 'Error checking subscription status' });
   }
 });
 
