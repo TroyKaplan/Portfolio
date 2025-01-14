@@ -15,16 +15,16 @@ const SubscriptionPage: React.FC = () => {
         <div className="subscription-card info-card">
           <h2>Subscription Benefits</h2>
           <ul className="benefits-list">
-            <li>Access to all premium games</li>
-            <li>Early access to new releases</li>
-            <li>Save game progress across devices</li>
-            <li>Ad-free gaming experience</li>
+            <li>Place Holder</li>
+            <li>Place Holder</li>
+            <li>Do not subscribe right now</li>
+            <li>Testing Testing Testing.</li>
           </ul>
           
           <div className="pricing-info">
             <h3>Pricing</h3>
-            <div className="price-tag">$5.99 / month</div>
-            <p className="price-note">Cancel anytime</p>
+            <div className="price-tag">$10.00 / quarter</div>
+            <p className="price-note">Billed every 3 months - Cancel anytime</p>
           </div>
         </div>
 

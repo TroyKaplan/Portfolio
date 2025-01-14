@@ -146,15 +146,16 @@ app.use(async (req, res, next) => {
 app.use(session({
   store: new pgSession({
     pool,
-    tableName: 'user_sessions',
-    pruneSessionInterval: 60 // Cleanup every minute
+    tableName: 'user_sessions'
   }),
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 1000 * 60 * 10 // 10 minutes
+    httpOnly: true,
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   }
 }));
 
