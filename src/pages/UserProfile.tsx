@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import './UserProfile.css';
+import ProfileActions from '../components/ProfileActions';
 
 interface UserProfile {
   username: string;
@@ -49,6 +51,9 @@ const UserProfile: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('UserProfile component mounted');
@@ -137,6 +142,17 @@ const UserProfile: React.FC = () => {
             <span>Role:</span>
             <span className={`role-badge ${userProfile.role}`}>{userProfile.role}</span>
           </div>
+          <div className="account-actions">
+            <ProfileActions 
+              email={userProfile.email} 
+              onEmailUpdate={(newEmail) => {
+                setUserProfile({
+                  ...userProfile,
+                  email: newEmail
+                });
+              }}
+            />
+          </div>
         </div>
 
         <div className="stats-card">
@@ -169,6 +185,13 @@ const UserProfile: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {success && (
+        <div className="success-message">
+          {success}
+          <button onClick={() => setSuccess(null)}>Close</button>
+        </div>
+      )}
     </div>
   );
 };
