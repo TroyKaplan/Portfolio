@@ -106,12 +106,9 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
         await pool.query(
           `UPDATE users 
            SET subscription_status = $1, 
-               role = 'subscriber',
-               subscription_end_date = to_timestamp($3),
-               subscription_id = $4
-           WHERE stripe_customer_id = $2
-           RETURNING id, role, subscription_status`,
-          ['active', invoice.customer, invoice.lines.data[0].period.end, invoice.subscription]
+               role = 'subscriber' 
+           WHERE stripe_customer_id = $2`,
+          ['active', invoice.customer]
         );
         break;
 
@@ -832,15 +829,14 @@ app.get('/api/subscription/status', ensureAuthenticated, async (req, res) => {
         
         if (stripeSubscription.status !== userData.subscription_status) {
           console.log(`${logPrefix} Updating out-of-sync subscription status from ${userData.subscription_status} to ${stripeSubscription.status}`);
-          await pool.query(
-            `UPDATE users 
-             SET subscription_status = $1,
-                 role = CASE WHEN $1 = 'active' THEN 'subscriber' ELSE 'user' END
-             WHERE stripe_customer_id = $2`,
-            [stripeSubscription.status, userData.stripe_customer_id]
+          await updateSubscriptionStatus(
+            pool,
+            userData.stripe_customer_id,
+            userData.subscription_id,
+            stripeSubscription.status,
+            stripeSubscription.current_period_end
           );
           userData.subscription_status = stripeSubscription.status;
-          userData.role = stripeSubscription.status === 'active' ? 'subscriber' : 'user';
         }
       } catch (stripeError) {
         console.error(`${logPrefix} Stripe error:`, stripeError);
@@ -984,5 +980,3 @@ app.post('/api/user/change-password', ensureAuthenticated, async (req, res) => {
     });
   }
 });
-
-app.use('/api/games/pong', ensureSubscriber);
