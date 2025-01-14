@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './UserProfile.css';
 import ProfileActions from '../components/ProfileActions';
+import { formatTimeSpent, formatDetailedTime } from '../utils/timeFormatters';
 
 interface UserProfile {
   username: string;

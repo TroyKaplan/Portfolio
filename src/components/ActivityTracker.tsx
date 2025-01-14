@@ -1,15 +1,15 @@
 import React, { useEffect } from 'react';
-import axios from 'axios';
+import { userService } from '../services/api';
 
 const ActivityTracker: React.FC = () => {
   useEffect(() => {
     const sendHeartbeat = async () => {
       try {
-        const response = await axios.get('/api/auth/current-user', { withCredentials: true });
+        const response = await userService.getCurrentUser();
         if (response.data.user) {
-          await axios.post('/api/auth/heartbeat', {}, { withCredentials: true });
+          await userService.sendHeartbeat();
         } else {
-          await axios.post('/api/anonymous-heartbeat', {}, { withCredentials: true });
+          await userService.sendAnonymousHeartbeat();
         }
       } catch (error) {
         console.error('Heartbeat error:', error);

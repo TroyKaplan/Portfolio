@@ -4,6 +4,9 @@ import type { User, ActiveUser } from '../types/user';
 import { useNavigate } from 'react-router-dom';
 import './AdminDashboard.css';
 import { apiEndpoints } from '../config/api';
+import { userService } from '../services/api';
+import { useAuth } from '../hooks/useAuth';
+import { formatTimeSpent } from '../utils/timeFormatters';
 
 interface VisitorStats {
   current: {
@@ -43,10 +46,7 @@ const AdminDashboard: React.FC = () => {
 
   const fetchActiveUsers = async () => {
     try {
-      const response = await axios.get('/api/active-users', {
-        withCredentials: true
-      });
-      
+      const response = await userService.getActiveUsers();
       setActiveUsers(response.data.authenticated);
       setAnonymousCount(response.data.anonymous.length);
       setTotalActive(response.data.totalActive);
