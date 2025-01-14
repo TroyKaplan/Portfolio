@@ -84,17 +84,18 @@ const UserProfile: React.FC = () => {
     }
   });
 
-  const statusMap: Record<StripeStatus, string> = {
-    'incomplete': 'pending',
-    'incomplete_expired': 'inactive',
-    'trialing': 'active',
-    'active': 'active',
-    'past_due': 'pending',
-    'canceled': 'canceled',
-    'unpaid': 'inactive'
+  const statusMap: Record<string, { label: string; color: string }> = {
+    'incomplete': { label: 'Pending', color: 'orange' },
+    'incomplete_expired': { label: 'Inactive', color: 'red' },
+    'trialing': { label: 'Active', color: 'green' },
+    'active': { label: 'Active', color: 'green' },
+    'past_due': { label: 'Past Due', color: 'red' },
+    'canceled': { label: 'Canceled', color: 'gray' },
+    'unpaid': { label: 'Unpaid', color: 'red' },
+    'pending': { label: 'Pending', color: 'orange' }
   };
 
-  const statusInfo = statusMap[(userProfile.subscription_status || 'inactive') as StripeStatus] || 
+  const statusInfo = statusMap[userProfile.subscription_status] || 
     { label: userProfile.subscription_status || 'Unknown', color: 'gray' };
   
   return (

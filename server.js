@@ -22,35 +22,26 @@ const server = require('http').createServer(app);
 
 // Move this BEFORE app.use(express.json())
 app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
   const logPrefix = '[WebhookHandler]';
+  
   try {
-    const sig = req.headers['stripe-signature'];
     const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     console.log(`${logPrefix} Processing event:`, event.type);
 
-    switch (event.type) {
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated':
-      case 'customer.subscription.deleted':
-      case 'customer.subscription.trial_will_end':
-        const subscription = event.data.object;
-        const userResult = await pool.query(
-          'SELECT id FROM users WHERE stripe_customer_id = $1',
-          [subscription.customer]
-        );
-        
-        if (userResult.rows.length > 0) {
-          await stripeService.updateSubscriptionDetails(
-            pool,
-            userResult.rows[0].id,
-            subscription.id,
-            subscription.status
-          );
-        }
-        break;
+    if (event.type === 'invoice.payment_succeeded') {
+      const subscription = event.data.object;
+      console.log(`${logPrefix} Payment succeeded for subscription:`, subscription.subscription);
+      
+      await stripeService.updateSubscriptionDetails(
+        pool,
+        subscription.customer,
+        subscription.subscription,
+        'active'
+      );
     }
-    
-    res.json({received: true});
+
+    res.json({ received: true });
   } catch (err) {
     console.error(`${logPrefix} Error:`, err);
     res.status(400).send(`Webhook Error: ${err.message}`);

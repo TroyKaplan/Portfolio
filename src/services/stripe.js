@@ -8,16 +8,35 @@ if (!process.env.STRIPE_SECRET_KEY) {
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const createSubscription = async (customerId, priceId) => {
-  return stripe.subscriptions.create({
-    customer: customerId,
-    items: [{ price: priceId }],
-    payment_behavior: 'default_incomplete',
-    payment_settings: {
-      payment_method_types: ['card'],
-      save_default_payment_method: 'on_subscription'
-    },
-    expand: ['latest_invoice.payment_intent'],
-  });
+  console.log('[StripeService:createSubscription] Creating subscription...', { customerId, priceId });
+  
+  try {
+    const subscription = await stripe.subscriptions.create({
+      customer: customerId,
+      items: [{ price: priceId }],
+      payment_behavior: 'default_incomplete',
+      expand: ['latest_invoice.payment_intent'],
+      payment_settings: {
+        payment_method_types: ['card'],
+        save_default_payment_method: 'on_subscription'
+      }
+    });
+
+    console.log('[StripeService:createSubscription] Subscription created:', {
+      id: subscription.id,
+      status: subscription.status,
+      clientSecret: subscription.latest_invoice.payment_intent.client_secret
+    });
+
+    return {
+      subscriptionId: subscription.id,
+      clientSecret: subscription.latest_invoice.payment_intent.client_secret,
+      status: subscription.status
+    };
+  } catch (error) {
+    console.error('[StripeService:createSubscription] Error:', error);
+    throw error;
+  }
 };
 
 const createCustomer = async (email, paymentMethodId, pool) => {
