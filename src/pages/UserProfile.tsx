@@ -56,11 +56,26 @@ const UserProfile: React.FC = () => {
 
   const fetchProfileData = async () => {
     try {
-      const response = await fetch('/api/user/profile');
-      if (!response.ok) throw new Error('Failed to fetch profile data');
+      console.log('Fetching profile data...');
+      const response = await fetch('/api/user/profile', {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        console.error('Profile fetch failed:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('Error details:', errorText);
+        throw new Error('Failed to fetch profile data');
+      }
+      
       const data = await response.json();
+      console.log('Profile data received:', data);
       setUserProfile(data.user);
     } catch (err) {
+      console.error('Profile fetch error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);

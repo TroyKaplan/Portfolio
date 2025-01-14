@@ -42,7 +42,14 @@ function App() {
                                         </PrivateRoute>
                                     }
                                 />
-                                <Route path="/profile" element={<UserProfile />} />
+                                <Route 
+                                    path="/profile" 
+                                    element={
+                                        <PrivateRoute>
+                                            <UserProfile />
+                                        </PrivateRoute>
+                                    } 
+                                />
                                 <Route path="/subscribe" element={<SubscriptionPage />} />
                                 <Route path="/admin/users/:userId" element={
                                     <PrivateRoute role="admin">
