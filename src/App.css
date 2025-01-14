@@ -12,6 +12,10 @@
   --card-background-color: #f8f8f8;
   --border-color: #ddd;
   --play-button-background: rgba(0, 128, 0, 0.7);
+  --table-header-bg: #f4f4f4;
+  --table-stripe-bg: #f8f8f8;
+  --table-hover-bg: #f0f0f0;
+  --table-text-color: #000000;
 }
 
 /* Dark theme variables */
@@ -26,9 +30,12 @@
   --footer-background-color: #1f1f1f;
   --footer-text-color: #e0e0e0;
   --card-background-color: #1f1f1f;
-  --border-color: #333;
+  --border-color: #444;
   --play-button-background: rgba(0, 128, 0, 0.7); /* Adjust if needed */
-
+  --table-header-bg: #2a2a2a;
+  --table-stripe-bg: #252525;
+  --table-hover-bg: #303030;
+  --table-text-color: #e0e0e0;
 }
 
 /* Apply the variables to global styles */
