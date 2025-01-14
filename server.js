@@ -32,21 +32,22 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
     
     switch (event.type) {
       case 'customer.subscription.created':
-        const subscriptionCreated = event.data.object;
-        console.log('Processing subscription creation for customer:', subscriptionCreated.customer);
-        const result = await pool.query(
-          'UPDATE users SET subscription_status = $1, subscription_id = $2, subscription_start_date = NOW(), subscription_end_date = to_timestamp($3), role = $4, stripe_customer_id = $5 WHERE id = $6 RETURNING *',
-          ['active', subscriptionCreated.id, subscriptionCreated.current_period_end, 'subscriber', subscriptionCreated.customer, req.user.id]
-        );
-        console.log('Database update result:', result.rows[0]);
-        break;
-
       case 'customer.subscription.updated':
-        const subscriptionUpdated = event.data.object;
-        if (subscriptionUpdated.cancel_at_period_end) {
-          await pool.query(
-            'UPDATE users SET subscription_status = $1, subscription_end_date = to_timestamp($2) WHERE stripe_customer_id = $3',
-            ['canceling', subscriptionUpdated.current_period_end, subscriptionUpdated.customer]
+        const subscription = event.data.object;
+        const customerId = subscription.customer;
+        
+        // Find user with this customer ID
+        const userResult = await pool.query(
+          'SELECT id FROM users WHERE stripe_customer_id = $1',
+          [customerId]
+        );
+        
+        if (userResult.rows[0]) {
+          await stripe.updateSubscriptionDetails(
+            userResult.rows[0].id,
+            customerId,
+            subscription.id,
+            subscription.status
           );
         }
         break;
