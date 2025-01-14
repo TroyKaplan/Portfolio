@@ -33,6 +33,8 @@ const AdminDashboard: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
   const [activeCount, setActiveCount] = useState<number>(0);
+  const [anonymousCount, setAnonymousCount] = useState<number>(0);
+  const [totalActive, setTotalActive] = useState<number>(0);
   const [error, setError] = useState<string>('');
   const [visitorStats, setVisitorStats] = useState<VisitorStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,21 +43,18 @@ const AdminDashboard: React.FC = () => {
 
   const fetchActiveUsers = async () => {
     try {
-      const response = await axios.get(apiEndpoints.activeUsers, {
-        withCredentials: true,
-        headers: { 'Accept': 'application/json' }
+      const response = await axios.get('/api/active-users', {
+        withCredentials: true
       });
-      if (Array.isArray(response.data)) {
-        setActiveUsers(response.data);
-        setActiveCount(response.data.length);
-      } else {
-        setActiveUsers([]);
-        setActiveCount(0);
-      }
+      
+      setActiveUsers(response.data.authenticated);
+      setAnonymousCount(response.data.anonymous.length);
+      setTotalActive(response.data.totalActive);
     } catch (error) {
       console.error('Error fetching active users:', error);
       setActiveUsers([]);
-      setActiveCount(0);
+      setAnonymousCount(0);
+      setTotalActive(0);
     }
   };
 

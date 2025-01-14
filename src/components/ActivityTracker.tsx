@@ -1,14 +1,12 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect } from 'react';
 import axios from 'axios';
-import { AuthContext } from '../contexts/AuthContext';
 
 const ActivityTracker: React.FC = () => {
-  const { user } = useContext(AuthContext);
-
   useEffect(() => {
     const sendHeartbeat = async () => {
       try {
-        if (user) {
+        const response = await axios.get('/api/auth/current-user', { withCredentials: true });
+        if (response.data.user) {
           await axios.post('/api/auth/heartbeat', {}, { withCredentials: true });
         } else {
           await axios.post('/api/anonymous-heartbeat', {}, { withCredentials: true });
@@ -18,14 +16,10 @@ const ActivityTracker: React.FC = () => {
       }
     };
 
-    // Send initial heartbeat
-    sendHeartbeat();
-
-    // Set up interval for regular heartbeats
-    const heartbeatInterval = setInterval(sendHeartbeat, 30000); // every 30 seconds
-
-    return () => clearInterval(heartbeatInterval);
-  }, [user]);
+    sendHeartbeat(); // Initial heartbeat
+    const interval = setInterval(sendHeartbeat, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return null;
 };

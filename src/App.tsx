@@ -14,11 +14,11 @@ import SubscriptionPage from './pages/SubscriptionPage';
 import AdminDashboard from './pages/AdminDashboard';
 import Login from './components/Login';
 import Register from './components/Register';
-import { AuthProvider } from './context/AuthContext';
 import UserProfile from './pages/UserProfile';
 import UserDetails from './pages/UserDetails';
 import ErrorBoundary from './components/ErrorBoundary';
 import ActivityTracker from './components/ActivityTracker';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
     return (
@@ -26,6 +26,7 @@ function App() {
             <ThemeProvider>
                 <Router>
                     <div className="app-container">
+                        <ActivityTracker />
                         <Navbar />
                         <div className="content-wrapper">
                             <Routes>
@@ -66,7 +67,6 @@ function App() {
                     </div>
                 </Router>
             </ThemeProvider>
-            <ActivityTracker />
         </AuthProvider>
     );
 }

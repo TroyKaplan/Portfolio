@@ -660,7 +660,8 @@ app.post('/api/auth/heartbeat', ensureAuthenticated, async (req, res) => {
 // Get active users (admin only)
 app.get('/api/active-users', ensureRole('admin'), async (req, res) => {
   try {
-    const result = await pool.query(
+    // Get authenticated active users
+    const authenticatedUsers = await pool.query(
       `SELECT u.id, u.username, u.role, u.email, au.last_seen
        FROM users u
        INNER JOIN active_users au ON u.id = au.user_id
@@ -669,23 +670,20 @@ app.get('/api/active-users', ensureRole('admin'), async (req, res) => {
     );
     
     // Get anonymous users
-    const anonymousResult = await pool.query(
-      `SELECT session_id, last_seen
+    const anonymousUsers = await pool.query(
+      `SELECT session_id, last_seen, device_info
        FROM anonymous_sessions
        WHERE last_seen > NOW() - INTERVAL '10 minutes'`
     );
 
-    return res.json({
-      activeUsers: result.rows,
-      anonymousUsers: anonymousResult.rows,
-      totalActive: result.rows.length + anonymousResult.rows.length
+    res.json({
+      authenticated: authenticatedUsers.rows,
+      anonymous: anonymousUsers.rows,
+      totalActive: authenticatedUsers.rows.length + anonymousUsers.rows.length
     });
   } catch (error) {
     console.error('Error fetching active users:', error);
-    return res.status(500).json({ 
-      message: 'Error fetching active users',
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Error fetching active users' });
   }
 });
 
