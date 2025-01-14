@@ -1,32 +1,29 @@
 import axios from 'axios';
+import { StripeStatus, statusMap } from '../types/subscription';
 
-export const checkSubscriptionStatus = async () => {
-  try {
-    const response = await axios.get('/api/subscription/status', {
-      withCredentials: true
-    });
+interface SubscriptionStatus {
+  status: string;
+  endDate?: string;
+  startDate?: string;
+  customerId?: string;
+  subscriptionId?: string;
+  role?: string;
+}
+
+class SubscriptionService {
+  static async getCurrentStatus(): Promise<SubscriptionStatus> {
+    const response = await axios.get('/api/subscription/status');
+    const data = response.data;
     
-    // Don't check subscription status for admin users
-    if (response.data?.role === 'admin') {
-      return { status: 'active', role: 'admin' };
-    }
-    
-    return response.data;
-  } catch (error) {
-    console.error('Failed to check subscription status:', error);
-    return null;
+    return {
+      status: statusMap[data.subscription_status as StripeStatus] || data.subscription_status,
+      endDate: data.subscription_end_date,
+      startDate: data.subscription_start_date,
+      customerId: data.stripe_customer_id,
+      subscriptionId: data.subscription_id,
+      role: data.role
+    };
   }
-};
+}
 
-
-export const cancelSubscription = async () => {
-  try {
-    const response = await axios.post('/api/subscription/cancel', {}, {
-      withCredentials: true
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Failed to cancel subscription:', error);
-    throw error;
-  }
-}; 
+export default SubscriptionService; 

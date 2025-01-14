@@ -6,94 +6,38 @@ import LoadingState from '../components/shared/LoadingState';
 import ErrorMessage from '../components/shared/ErrorMessage';
 import ProfileActions from '../components/ProfileActions';
 import './UserProfile.css';
+import { StripeStatus, statusMap } from '../types/subscription';
+import SubscriptionService from '../services/subscriptionService';
 
 const API_URL = process.env.NODE_ENV === 'development' 
   ? 'http://localhost:8080' 
   : '';
 
+const mapStripeStatus = (status: string): string => {
+  return statusMap[status as StripeStatus] || status;
+};
+
 const UserProfile: React.FC = () => {
-  const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAuthAndFetchProfile = async () => {
-      console.log('=== Starting Auth Check ===');
-      console.log('API_URL:', API_URL);
-      console.log('Current Environment:', process.env.NODE_ENV);
-      
+    const fetchProfileData = async () => {
       try {
-        console.log('Making auth request with config:', {
-          url: `${API_URL}/api/auth/current-user`,
-          withCredentials: true,
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
+        const [authResponse, subscriptionStatus] = await Promise.all([
+          axios.get(`${API_URL}/api/auth/current-user`),
+          SubscriptionService.getCurrentStatus()
+        ]);
+
+        setUserProfile({
+          ...authResponse.data.user,
+          subscription_status: subscriptionStatus.status,
+          subscription_end_date: subscriptionStatus.endDate,
+          subscription_start_date: subscriptionStatus.startDate,
+          role: subscriptionStatus.role
         });
-
-        const authResponse = await axios.get(`${API_URL}/api/auth/current-user`, {
-          withCredentials: true,
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-
-        console.log('Auth Response:', {
-          status: authResponse.status,
-          headers: authResponse.headers,
-          data: authResponse.data,
-          cookies: document.cookie
-        });
-
-        if (!authResponse.data?.user) {
-          console.warn('Auth Failed - No user data:', authResponse.data);
-          navigate('/login', { replace: true });
-          return;
-        }
-
-        console.log('Auth Successful - User:', authResponse.data.user);
-        console.log('=== Starting Profile Fetch ===');
-
-        const profileResponse = await axios.get(`${API_URL}/api/user/profile`, {
-          withCredentials: true,
-          headers: { 
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-
-        console.log('Profile Response:', {
-          status: profileResponse.status,
-          headers: profileResponse.headers,
-          data: profileResponse.data
-        });
-
-        if (!profileResponse.data || typeof profileResponse.data === 'string') {
-          console.error('Invalid profile data received:', profileResponse.data);
-          setError('Invalid profile data received from server');
-          return;
-        }
-
-        console.log('Profile data received:', {
-          status: profileResponse.status,
-          data: profileResponse.data,
-          subscription: {
-            status: profileResponse.data.subscription_status,
-            endDate: profileResponse.data.subscription_end_date,
-            startDate: profileResponse.data.subscription_start_date
-          },
-          basicInfo: {
-            username: profileResponse.data.username,
-            email: profileResponse.data.email,
-            role: profileResponse.data.role,
-            created: profileResponse.data.created_at
-          }
-        });
-
-        setUserProfile(profileResponse.data);
       } catch (err) {
         console.error('=== Auth/Profile Error Details ===');
         console.error('Error Type:', err instanceof Error ? err.constructor.name : typeof err);
@@ -124,7 +68,7 @@ const UserProfile: React.FC = () => {
       }
     };
 
-    checkAuthAndFetchProfile();
+    fetchProfileData();
   }, [navigate]);
 
   if (isLoading) {
@@ -158,14 +102,17 @@ const UserProfile: React.FC = () => {
     }
   });
 
-  const statusMap: Record<string, { label: string; color: string }> = {
-    active: { label: 'Active', color: 'green' },
-    pending: { label: 'Payment Pending', color: 'orange' },
-    inactive: { label: 'Inactive', color: 'red' },
-    canceled: { label: 'Canceled', color: 'gray' }
+  const statusMap: Record<StripeStatus, string> = {
+    'incomplete': 'pending',
+    'incomplete_expired': 'inactive',
+    'trialing': 'active',
+    'active': 'active',
+    'past_due': 'pending',
+    'canceled': 'canceled',
+    'unpaid': 'inactive'
   };
 
-  const statusInfo = statusMap[userProfile.subscription_status || 'inactive'] || 
+  const statusInfo = statusMap[(userProfile.subscription_status || 'inactive') as StripeStatus] || 
     { label: userProfile.subscription_status || 'Unknown', color: 'gray' };
   
   return (
