@@ -13,6 +13,7 @@ const { Pool } = require('pg');
 const pgSession = require('connect-pg-simple')(session);
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const http = require('http');
+const { validateEmail } = require('./src/middlewares/validateEmail');
 
 // Initialize express app
 const app = express();
@@ -935,14 +936,14 @@ app.post('/api/user/update-email', ensureAuthenticated, async (req, res) => {
     });
   }
 
-  try {
-    if (!validateEmail(email)) {
-      return res.status(400).json({ 
-        error: 'Invalid email format',
-        code: 'INVALID_EMAIL'
-      });
-    }
+  if (!validateEmail(email)) {
+    return res.status(400).json({
+      error: 'Invalid email format',
+      code: 'INVALID_EMAIL'
+    });
+  }
 
+  try {
     // Check if email is already in use
     const existingUser = await pool.query(
       'SELECT id FROM users WHERE email = $1 AND id != $2',
