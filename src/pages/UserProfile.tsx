@@ -26,19 +26,31 @@ const UserProfile: React.FC = () => {
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
+        console.log('Fetching profile data...');
         const [authResponse, subscriptionStatus] = await Promise.all([
           axios.get(`${API_URL}/api/auth/current-user`),
           SubscriptionService.getCurrentStatus()
         ]);
 
-        setUserProfile({
-          ...authResponse.data.user,
+        console.log('Auth Response:', authResponse.data);
+        console.log('Subscription Status:', subscriptionStatus);
+
+        const userData = {
+          ...authResponse.data,
           subscription_status: subscriptionStatus.status,
           subscription_end_date: subscriptionStatus.endDate,
           subscription_start_date: subscriptionStatus.startDate,
-          role: subscriptionStatus.role
-        });
+          role: authResponse.data.role || subscriptionStatus.role
+        };
+
+        console.log('Setting user profile with:', userData);
+        setUserProfile(userData);
       } catch (err) {
+        console.error('Detailed error in fetchProfileData:', {
+          error: err,
+          isAxiosError: axios.isAxiosError(err),
+          response: axios.isAxiosError(err) ? err.response?.data : null
+        });
         console.error('=== Auth/Profile Error Details ===');
         console.error('Error Type:', err instanceof Error ? err.constructor.name : typeof err);
         console.error('Error Message:', err instanceof Error ? err.message : 'Unknown error');
