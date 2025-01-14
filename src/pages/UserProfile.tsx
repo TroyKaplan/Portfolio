@@ -108,63 +108,64 @@ const UserProfile: React.FC = () => {
     console.log('Change password clicked');
   };
 
-  if (isLoading) {
-    console.log('Rendering loading state');
-    return <LoadingState />;
-  }
-  if (error) {
-    console.log('Rendering error state:', error);
-    return <ErrorMessage error={{ message: error }} onClose={() => setError(null)} />;
-  }
-  if (!userProfile) {
-    console.log('No user profile data available');
-    return null;
-  }
-
-  console.log('Rendering user profile:', userProfile);
+  if (isLoading) return <LoadingState />;
+  if (error) return <ErrorMessage error={{ message: error }} onClose={() => setError(null)} />;
+  if (!userProfile) return null;
 
   const subscriptionStatus = getSubscriptionStatus(userProfile.subscription_status);
+  const hours = Math.floor(userProfile.total_time_spent / 3600);
+  const minutes = Math.floor((userProfile.total_time_spent % 3600) / 60);
 
   return (
     <div className="profile-container">
-      <div className="profile-section">
-        <h3>Basic Information</h3>
-        <p>Username: {userProfile.username}</p>
-        <p>Email: {userProfile.email}</p>
-        <p>Role: <span className={`role-badge ${userProfile.role.toLowerCase()}`}>{userProfile.role}</span></p>
-        <div className="profile-actions">
-          <button className="profile-button" onClick={handleUpdateEmail}>
-            Update Email
-          </button>
-          <button className="profile-button" onClick={handleChangePassword}>
-            Change Password
-          </button>
-        </div>
+      <div className="header-section">
+        <h1>User Profile</h1>
       </div>
 
-      <div className="profile-section">
-        <h3>Subscription Details</h3>
-        <p>Status: 
-          <span className={`status-badge ${subscriptionStatus.label.toLowerCase()}`}>
-            {subscriptionStatus.label}
-          </span>
-        </p>
-        {userProfile.subscription_start_date && (
-          <p>Start Date: {new Date(userProfile.subscription_start_date).toLocaleDateString()}</p>
-        )}
-        {userProfile.subscription_end_date && (
-          <p>End Date: {new Date(userProfile.subscription_end_date).toLocaleDateString()}</p>
-        )}
-      </div>
-
-      <div className="profile-section">
-        <h3>Statistics</h3>
-        <div className="stats-grid">
+      <div className="stats-grid">
+        <div className="stats-card">
+          <h2>Account Information</h2>
           <div className="stat-item">
-            <div className="stat-value">
-              {formatTimeSpent(userProfile.total_time_spent || 0)}
+            <span>Username:</span>
+            <span>{userProfile.username}</span>
+          </div>
+          <div className="stat-item">
+            <span>Email:</span>
+            <span>{userProfile.email}</span>
+          </div>
+          <div className="stat-item">
+            <span>Role:</span>
+            <span className={`role-badge ${userProfile.role}`}>{userProfile.role}</span>
+          </div>
+        </div>
+
+        <div className="stats-card">
+          <h2>Subscription Details</h2>
+          <div className="stat-item">
+            <span>Status:</span>
+            <span className={`status-badge ${subscriptionStatus.color}`}>
+              {subscriptionStatus.label}
+            </span>
+          </div>
+          {userProfile.subscription_start_date && (
+            <div className="stat-item">
+              <span>Start Date:</span>
+              <span>{new Date(userProfile.subscription_start_date).toLocaleDateString()}</span>
             </div>
-            <div className="stat-label">Total Time</div>
+          )}
+          {userProfile.subscription_end_date && (
+            <div className="stat-item">
+              <span>End Date:</span>
+              <span>{new Date(userProfile.subscription_end_date).toLocaleDateString()}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="stats-card">
+          <h2>Usage Statistics</h2>
+          <div className="stat-item">
+            <span>Total Time:</span>
+            <span>{hours}h {minutes}m</span>
           </div>
         </div>
       </div>
