@@ -733,58 +733,6 @@ setInterval(() => {
     }
 }, 60000); // Check every minute
 
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-    console.log('Webhook event received:', event.type);
-  } catch (err) {
-    console.error('Webhook error:', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  try {
-    switch (event.type) {
-      case 'customer.subscription.created':
-        const subscriptionCreated = event.data.object;
-        console.log('Subscription created:', subscriptionCreated);
-        await pool.query(
-          'UPDATE users SET subscription_status = $1, subscription_id = $2, subscription_start_date = NOW(), subscription_end_date = to_timestamp($3), role = $4 WHERE stripe_customer_id = $5',
-          ['active', subscriptionCreated.id, subscriptionCreated.current_period_end, 'subscriber', subscriptionCreated.customer]
-        );
-        console.log('Database updated for subscription creation');
-        break;
-
-      case 'customer.subscription.updated':
-        const subscriptionUpdated = event.data.object;
-        if (subscriptionUpdated.cancel_at_period_end) {
-          await pool.query(
-            'UPDATE users SET subscription_status = $1, subscription_end_date = to_timestamp($2) WHERE stripe_customer_id = $3',
-            ['canceling', subscriptionUpdated.current_period_end, subscriptionUpdated.customer]
-          );
-        }
-        break;
-
-      case 'customer.subscription.deleted':
-        const subscriptionDeleted = event.data.object;
-        await pool.query(
-          'UPDATE users SET subscription_status = $1, role = $2 WHERE stripe_customer_id = $3',
-          ['inactive', 'user', subscriptionDeleted.customer]
-        );
-        break;
-    }
-
-    res.json({received: true});
-  } catch (error) {
-    console.error('Error processing webhook:', error);
-    return res.status(500).send('Error processing webhook');
-  }
-});
-
 app.get('/api/subscription/status', ensureAuthenticated, async (req, res) => {
   try {
     console.log('Checking subscription for user:', req.user.id);
