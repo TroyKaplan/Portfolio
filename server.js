@@ -21,23 +21,65 @@ const server = require('http').createServer(app);
 
 // Move this BEFORE app.use(express.json())
 app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+  const logPrefix = '[WebhookHandler]';
+  console.log(`${logPrefix} Received webhook request`);
+  
   const sig = req.headers['stripe-signature'];
+  console.log(`${logPrefix} Stripe signature:`, sig);
   
   let event;
   try {
+    console.log(`${logPrefix} Constructing webhook event...`);
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-    console.log('Webhook event constructed successfully:', event.type);
+    console.log(`${logPrefix} Event constructed successfully:`, {
+      type: event.type,
+      id: event.id,
+      created: new Date(event.created * 1000).toISOString()
+    });
     
     switch (event.type) {
+      case 'payment_intent.succeeded':
+        const paymentIntent = event.data.object;
+        console.log(`${logPrefix} Payment succeeded:`, {
+          customer: paymentIntent.customer,
+          amount: paymentIntent.amount,
+          currency: paymentIntent.currency,
+          payment_method: paymentIntent.payment_method
+        });
+        
+        console.log(`${logPrefix} Fetching subscription details for customer:`, paymentIntent.customer);
+        const subscriptionResult = await pool.query(
+          'SELECT id, subscription_id FROM users WHERE stripe_customer_id = $1',
+          [paymentIntent.customer]
+        );
+        console.log(`${logPrefix} Database query result:`, subscriptionResult.rows[0]);
+        
+        if (subscriptionResult.rows[0]?.subscription_id) {
+          console.log(`${logPrefix} Retrieving subscription from Stripe:`, subscriptionResult.rows[0].subscription_id);
+          const subscription = await stripe.subscriptions.retrieve(subscriptionResult.rows[0].subscription_id);
+          console.log(`${logPrefix} Stripe subscription details:`, {
+            id: subscription.id,
+            status: subscription.status,
+            current_period_end: new Date(subscription.current_period_end * 1000).toISOString()
+          });
+          
+          await stripeService.updateSubscriptionDetails(
+            pool,
+            subscriptionResult.rows[0].id,
+            subscription.id,
+            subscription.status
+          );
+        }
+        break;
+
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
         const subscription = event.data.object;
-        const customerId = subscription.customer;
+        console.log('Subscription event:', subscription.status, 'for customer:', subscription.customer);
         
-        // Find user with this customer ID
         const userResult = await pool.query(
           'SELECT id FROM users WHERE stripe_customer_id = $1',
-          [customerId]
+          [subscription.customer]
         );
         
         if (userResult.rows[0]) {
@@ -59,9 +101,12 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
         break;
     }
     
+    console.log(`${logPrefix} Webhook processed successfully`);
     res.json({received: true});
   } catch (err) {
-    console.error('Webhook error:', err.message);
+    console.error(`${logPrefix} Error processing webhook:`, err);
+    console.error(`${logPrefix} Error stack:`, err.stack);
+    console.error(`${logPrefix} Event data (if available):`, event?.data?.object);
     res.status(400).send(`Webhook Error: ${err.message}`);
   }
 });
