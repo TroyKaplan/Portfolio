@@ -16,8 +16,17 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({ email, onEmailUpdate })
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleEmailUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateEmail(newEmail)) {
+      setError('Please enter a valid email address');
+      return;
+    }
     try {
       const response = await axios.post('/api/user/update-email', { email: newEmail }, {
         withCredentials: true
