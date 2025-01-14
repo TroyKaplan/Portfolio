@@ -45,6 +45,7 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
         
         if (userResult.rows[0]) {
           await stripeService.updateSubscriptionDetails(
+            pool,
             userResult.rows[0].id,
             customerId,
             subscription.id,
@@ -398,6 +399,7 @@ app.post('/api/create-subscription', ensureAuthenticated, async (req, res) => {
     const subscription = await createSubscription(customer.id, process.env.STRIPE_PRICE_ID);
 
     await stripeService.updateSubscriptionDetails(
+      pool,
       req.user.id,
       customer.id,
       subscription.id,

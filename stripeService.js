@@ -1,7 +1,6 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const pool = require('./db'); // Adjust path as needed
 
-const updateSubscriptionDetails = async (userId, customerId, subscriptionId, status) => {
+const updateSubscriptionDetails = async (pool, userId, customerId, subscriptionId, status) => {
   try {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     const currentPeriodEnd = new Date(subscription.current_period_end * 1000);
