@@ -27,19 +27,20 @@ const UserProfile: React.FC = () => {
     const fetchProfileData = async () => {
       try {
         console.log('Fetching profile data...');
-        const [userResponse, subscriptionResponse] = await Promise.all([
-          axios.get(`${API_URL}/api/auth/current-user`),
-          SubscriptionService.getCurrentStatus()
-        ]);
-
+        const userResponse = await axios.get(`${API_URL}/api/auth/current-user`);
         console.log('User Response:', userResponse.data);
-        console.log('Subscription Response:', subscriptionResponse);
 
+        const userData = userResponse.data.user;
+        
         setUserProfile({
-          ...userResponse.data.user,
-          subscription_status: subscriptionResponse.status,
-          subscription_end_date: subscriptionResponse.endDate,
-          subscription_start_date: subscriptionResponse.startDate
+          username: userData.username,
+          email: userData.email,
+          role: userData.role,
+          created_at: userData.created_at,
+          subscription_status: userData.subscription_status,
+          subscription_end_date: userData.subscription_end_date,
+          subscription_start_date: userData.subscription_start_date,
+          total_time_spent: userData.total_time_spent
         });
       } catch (err) {
         console.error('Error fetching profile data:', err);
