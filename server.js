@@ -100,6 +100,19 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
         );
         break;
 
+      case 'invoice.payment_succeeded':
+        const invoice = event.data.object;
+        const customerId = invoice.customer;
+        const userId = invoice.metadata.userId; // Assuming you set userId in metadata
+
+        // Update user role to Subscriber
+        await pool.query(
+          'UPDATE users SET role = $1 WHERE id = $2',
+          ['Subscriber', userId]
+        );
+        console.log(`[Webhook] Updated user role to Subscriber for user ID: ${userId}`);
+        break;
+
       // Add other cases as needed
     }
 

@@ -155,7 +155,7 @@ const UserProfile: React.FC = () => {
           )}
           {userProfile.subscription_end_date && (
             <div className="stat-item">
-              <span>End Date:</span>
+              <span>Next Payment Date/End Date:</span>
               <span>{new Date(userProfile.subscription_end_date).toLocaleDateString()}</span>
             </div>
           )}
