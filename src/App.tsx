@@ -18,6 +18,7 @@ import { AuthProvider } from './context/AuthContext';
 import UserProfile from './pages/UserProfile';
 import UserDetails from './pages/UserDetails';
 import ErrorBoundary from './components/ErrorBoundary';
+import ActivityTracker from './components/ActivityTracker';
 
 function App() {
     return (
@@ -65,6 +66,7 @@ function App() {
                     </div>
                 </Router>
             </ThemeProvider>
+            <ActivityTracker />
         </AuthProvider>
     );
 }

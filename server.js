@@ -633,14 +633,16 @@ app.post('/api/auth/heartbeat', ensureAuthenticated, async (req, res) => {
   try {
     // Update active users
     await pool.query(
-      `INSERT INTO active_users (session_id, user_id, username) 
-       VALUES ($1, $2, $3) 
-       ON CONFLICT (session_id) 
-       DO UPDATE SET last_seen = CURRENT_TIMESTAMP`,
+      `INSERT INTO active_users (session_id, user_id, username, last_seen) 
+       VALUES ($1, $2, $3, NOW()) 
+       ON CONFLICT (user_id) 
+       DO UPDATE SET 
+         last_seen = NOW(),
+         session_id = $1`,
       [req.sessionID, req.user.id, req.user.username]
     );
 
-    // Update total time spent (increment by heartbeat interval - typically 30 seconds)
+    // Update total time spent
     await pool.query(
       `UPDATE users 
        SET total_time_spent = COALESCE(total_time_spent, 0) + 30
@@ -658,23 +660,56 @@ app.post('/api/auth/heartbeat', ensureAuthenticated, async (req, res) => {
 // Get active users (admin only)
 app.get('/api/active-users', ensureRole('admin'), async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
-    
     const result = await pool.query(
-      `SELECT username, last_seen 
-       FROM active_users 
-       WHERE last_seen > NOW() - INTERVAL '10 minutes'`
+      `SELECT u.id, u.username, u.role, u.email, au.last_seen
+       FROM users u
+       INNER JOIN active_users au ON u.id = au.user_id
+       WHERE au.last_seen > NOW() - INTERVAL '10 minutes'
+       ORDER BY au.last_seen DESC`
     );
     
-    return res.json(result.rows || []);
+    // Get anonymous users
+    const anonymousResult = await pool.query(
+      `SELECT session_id, last_seen
+       FROM anonymous_sessions
+       WHERE last_seen > NOW() - INTERVAL '10 minutes'`
+    );
+
+    return res.json({
+      activeUsers: result.rows,
+      anonymousUsers: anonymousResult.rows,
+      totalActive: result.rows.length + anonymousResult.rows.length
+    });
   } catch (error) {
     console.error('Error fetching active users:', error);
     return res.status(500).json({ 
       message: 'Error fetching active users',
       error: error.message 
     });
+  }
+});
+
+// Track anonymous sessions
+app.post('/api/anonymous-heartbeat', async (req, res) => {
+  const logPrefix = '[AnonymousHeartbeat]';
+  try {
+    const sessionId = req.sessionID;
+    console.log(`${logPrefix} Updating anonymous session:`, sessionId);
+
+    await pool.query(
+      `INSERT INTO anonymous_sessions (session_id, last_seen, page_views) 
+       VALUES ($1, NOW(), 1)
+       ON CONFLICT (session_id) 
+       DO UPDATE SET 
+         last_seen = NOW(),
+         page_views = anonymous_sessions.page_views + 1`,
+      [sessionId]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`${logPrefix} Error:`, error);
+    res.status(500).json({ message: 'Error updating anonymous session' });
   }
 });
 
