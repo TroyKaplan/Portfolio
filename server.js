@@ -12,7 +12,8 @@ const { Pool } = require('pg');
 const pgSession = require('connect-pg-simple')(session);
 const { createCustomer, createSubscription } = require('./src/services/stripe');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const stripeService = require('./stripeService');
+const stripeService = require('./src/services/stripe');
+const { validateEmail, requireEmail } = require('./src/middlewares/validateEmail');
 
 require('dotenv').config();
 
@@ -28,57 +29,24 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
     console.log(`${logPrefix} Processing event:`, event.type);
 
     switch (event.type) {
-      case 'payment_intent.succeeded':
-        const paymentIntent = event.data.object;
-        console.log(`${logPrefix} Payment succeeded for customer:`, paymentIntent.customer);
-        break;
-
-      case 'invoice.payment_succeeded':
-        const invoice = event.data.object;
-        console.log(`${logPrefix} Invoice payment succeeded:`, invoice.subscription);
-        const subscriptionDetails = await stripe.subscriptions.retrieve(invoice.subscription);
-        
-        const userResult = await pool.query(
-          'SELECT id FROM users WHERE stripe_customer_id = $1',
-          [invoice.customer]
-        );
-        
-        if (userResult.rows[0]) {
-          await stripeService.updateSubscriptionDetails(
-            pool,
-            userResult.rows[0].id,
-            invoice.subscription,
-            subscriptionDetails.status
-          );
-        }
-        break;
-
-      case 'customer.subscription.updated':
       case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted':
+      case 'customer.subscription.trial_will_end':
         const subscription = event.data.object;
-        console.log(`${logPrefix} Subscription event:`, subscription.status, 'for customer:', subscription.customer);
-        
-        const subUserResult = await pool.query(
+        const userResult = await pool.query(
           'SELECT id FROM users WHERE stripe_customer_id = $1',
           [subscription.customer]
         );
         
-        if (subUserResult.rows[0]) {
+        if (userResult.rows.length > 0) {
           await stripeService.updateSubscriptionDetails(
             pool,
-            subUserResult.rows[0].id,
+            userResult.rows[0].id,
             subscription.id,
             subscription.status
           );
         }
-        break;
-
-      case 'customer.subscription.deleted':
-        const deletedSubscription = event.data.object;
-        await pool.query(
-          'UPDATE users SET subscription_status = $1, subscription_id = $2, role = $3, subscription_end_date = NOW() WHERE stripe_customer_id = $4',
-          ['inactive', null, 'user', deletedSubscription.customer]
-        );
         break;
     }
     
@@ -397,32 +365,60 @@ app.get('/admin-only', ensureRole('admin'), (req, res) => {
 });
 
 // Create subscription endpoint
-app.post('/api/create-subscription', ensureAuthenticated, async (req, res) => {
-  const { paymentMethodId } = req.body;
-  
-  try {
-    const customer = await createCustomer(
-      req.user.email,
-      paymentMethodId, 
-      pool,
-      req.user.id
-    );
-    const subscription = await createSubscription(customer.id, process.env.STRIPE_PRICE_ID);
+app.post('/api/create-subscription', 
+  ensureAuthenticated,
+  requireEmail,
+  async (req, res) => {
+    const logPrefix = '[SubscriptionCreate]';
+    const { paymentMethodId } = req.body;
+    
+    try {
+      const user = await pool.query(
+        'SELECT email, stripe_customer_id FROM users WHERE id = $1',
+        [req.user.id]
+      );
 
-    await stripeService.updateSubscriptionDetails(
-      pool,
-      req.user.id,
-      customer.id,
-      subscription.id,
-      subscription.status
-    );
+      if (!user.rows[0].email) {
+        return res.status(400).json({
+          error: 'Valid email required',
+          code: 'EMAIL_REQUIRED'
+        });
+      }
 
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Subscription error:', error);
-    res.status(500).json({ error: error.message });
+      let customerId = user.rows[0].stripe_customer_id;
+      
+      if (!customerId) {
+        const customer = await createCustomer(
+          user.rows[0].email,
+          paymentMethodId,
+          pool,
+          req.user.id
+        );
+        customerId = customer.id;
+      }
+
+      const subscription = await createSubscription(customerId, process.env.STRIPE_PRICE_ID);
+      
+      await stripeService.updateSubscriptionDetails(
+        pool,
+        req.user.id,
+        subscription.id,
+        subscription.status
+      );
+
+      res.json({
+        success: true,
+        subscription: subscription
+      });
+    } catch (error) {
+      console.error(`${logPrefix} Error:`, error);
+      res.status(500).json({ 
+        error: 'Failed to create subscription',
+        details: error.message 
+      });
+    }
   }
-});
+);
 
 // Get all users (admin only)
 app.get('/api/users', ensureRole('admin'), async (req, res) => {
@@ -813,14 +809,38 @@ app.get('/api/subscription/status', ensureAuthenticated, async (req, res) => {
 // Add email update endpoint
 app.post('/api/user/update-email', ensureAuthenticated, async (req, res) => {
   const { email } = req.body;
+  const logPrefix = '[UpdateEmail]';
+
   try {
+    if (!validateEmail(email)) {
+      return res.status(400).json({ 
+        error: 'Invalid email format',
+        code: 'INVALID_EMAIL'
+      });
+    }
+
+    const user = await pool.query(
+      'SELECT stripe_customer_id FROM users WHERE id = $1',
+      [req.user.id]
+    );
+
+    // Update email in database
     await pool.query(
       'UPDATE users SET email = $1 WHERE id = $2',
       [email, req.user.id]
     );
+
+    // If user has Stripe customer ID, update email in Stripe
+    if (user.rows[0].stripe_customer_id) {
+      await stripe.customers.update(
+        user.rows[0].stripe_customer_id,
+        { email: email }
+      );
+    }
+
     res.json({ message: 'Email updated successfully' });
   } catch (error) {
-    console.error('Error updating email:', error);
+    console.error(`${logPrefix} Error:`, error);
     res.status(500).json({ message: 'Error updating email' });
   }
 });

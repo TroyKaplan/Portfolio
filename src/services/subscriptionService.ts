@@ -12,6 +12,7 @@ export const checkSubscriptionStatus = async () => {
   }
 };
 
+
 export const cancelSubscription = async () => {
   try {
     const response = await axios.post('/api/subscription/cancel', {}, {

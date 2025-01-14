@@ -16,7 +16,7 @@ const createSubscription = async (customerId, priceId) => {
   });
 };
 
-const createCustomer = async (email, paymentMethodId, pool, userId) => {
+const createCustomer = async (email, paymentMethodId, pool) => {
   console.log('Creating customer with email:', email);
   const customer = await stripe.customers.create({
     email,
@@ -26,8 +26,8 @@ const createCustomer = async (email, paymentMethodId, pool, userId) => {
   console.log('Stripe customer created:', customer.id);
 
   const result = await pool.query(
-    'UPDATE users SET stripe_customer_id = $1, email = $2 WHERE id = $3 RETURNING *',
-    [customer.id, email, userId]
+    'UPDATE users SET stripe_customer_id = $1, email = $2 WHERE email = $3 RETURNING *',
+    [customer.id, email, email]
   );
   console.log('Database updated with customer ID:', result.rows[0]);
 
@@ -47,18 +47,41 @@ const updateCustomer = async (userId, customerId) => {
   }
 };
 
-const updateSubscriptionDetails = async (userId, stripeCustomerId, subscriptionId, status) => {
+const updateSubscriptionDetails = async (pool, userId, subscriptionId, status) => {
+  const logPrefix = `[StripeService:updateSubscriptionDetails] [UserID: ${userId}]`;
+  console.log(`${logPrefix} Starting subscription update...`);
+  
   try {
+    // Map Stripe status to our internal status
+    const subscriptionStatus = status === 'active' ? 'active' : 
+                             status === 'trialing' ? 'active' :
+                             status === 'past_due' ? 'past_due' :
+                             status === 'canceled' ? 'inactive' : 
+                             status === 'unpaid' ? 'inactive' : 
+                             status === 'incomplete_expired' ? 'inactive' : 
+                             status === 'incomplete' ? 'pending' : status;
+    
+    const role = subscriptionStatus === 'active' ? 'subscriber' : 'user';
+    
+    console.log(`${logPrefix} Mapped status:`, { original: status, mapped: subscriptionStatus, role });
+
     const result = await pool.query(
       `UPDATE users 
-       SET stripe_customer_id = $1,
-           subscription_id = $2, 
-           subscription_status = $3,
-           role = $4,
-           subscription_start_date = CURRENT_TIMESTAMP
-       WHERE id = $5
+       SET subscription_status = $1, 
+           subscription_id = $2,
+           role = $3,
+           subscription_start_date = CASE 
+             WHEN $1 = 'active' AND subscription_start_date IS NULL THEN NOW() 
+             ELSE subscription_start_date 
+           END,
+           subscription_end_date = CASE 
+             WHEN $1 = 'active' THEN NULL 
+             WHEN $1 IN ('inactive', 'canceled') THEN NOW() 
+             ELSE subscription_end_date 
+           END
+       WHERE id = $4
        RETURNING *`,
-      [stripeCustomerId, subscriptionId, status, status === 'active' ? 'subscriber' : 'user', userId]
+      [subscriptionStatus, subscriptionId, role, userId]
     );
     
     if (!result.rows[0]) {
@@ -67,7 +90,7 @@ const updateSubscriptionDetails = async (userId, stripeCustomerId, subscriptionI
     
     return result.rows[0];
   } catch (error) {
-    console.error('Error updating subscription details:', error);
+    console.error(`${logPrefix} Error:`, error);
     throw error;
   }
 };
