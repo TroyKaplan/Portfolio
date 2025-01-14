@@ -27,54 +27,23 @@ const UserProfile: React.FC = () => {
     const fetchProfileData = async () => {
       try {
         console.log('Fetching profile data...');
-        const [authResponse, subscriptionStatus] = await Promise.all([
+        const [userResponse, subscriptionResponse] = await Promise.all([
           axios.get(`${API_URL}/api/auth/current-user`),
           SubscriptionService.getCurrentStatus()
         ]);
 
-        console.log('Auth Response:', authResponse.data);
-        console.log('Subscription Status:', subscriptionStatus);
+        console.log('User Response:', userResponse.data);
+        console.log('Subscription Response:', subscriptionResponse);
 
-        const userData = {
-          ...authResponse.data,
-          subscription_status: subscriptionStatus.status,
-          subscription_end_date: subscriptionStatus.endDate,
-          subscription_start_date: subscriptionStatus.startDate,
-          role: authResponse.data.role || subscriptionStatus.role
-        };
-
-        console.log('Setting user profile with:', userData);
-        setUserProfile(userData);
-      } catch (err) {
-        console.error('Detailed error in fetchProfileData:', {
-          error: err,
-          isAxiosError: axios.isAxiosError(err),
-          response: axios.isAxiosError(err) ? err.response?.data : null
+        setUserProfile({
+          ...userResponse.data.user,
+          subscription_status: subscriptionResponse.status,
+          subscription_end_date: subscriptionResponse.endDate,
+          subscription_start_date: subscriptionResponse.startDate
         });
-        console.error('=== Auth/Profile Error Details ===');
-        console.error('Error Type:', err instanceof Error ? err.constructor.name : typeof err);
-        console.error('Error Message:', err instanceof Error ? err.message : 'Unknown error');
-        
-        if (axios.isAxiosError(err)) {
-          console.error('Axios Error Config:', {
-            url: err.config?.url,
-            method: err.config?.method,
-            headers: err.config?.headers,
-            withCredentials: err.config?.withCredentials
-          });
-          console.error('Axios Error Response:', {
-            status: err.response?.status,
-            statusText: err.response?.statusText,
-            headers: err.response?.headers,
-            data: err.response?.data
-          });
-        }
-
-        if (axios.isAxiosError(err) && err.response?.status === 401) {
-          console.warn('Session expired, redirecting to login');
-          navigate('/login', { replace: true });
-          return;
-        }
+      } catch (err) {
+        console.error('Error fetching profile data:', err);
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
       } finally {
         setIsLoading(false);
       }
