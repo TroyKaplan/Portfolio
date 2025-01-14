@@ -16,7 +16,7 @@ const createSubscription = async (customerId, priceId) => {
   });
 };
 
-const createCustomer = async (email, paymentMethodId, pool) => {
+const createCustomer = async (email, paymentMethodId, pool, userId) => {
   console.log('Creating customer with email:', email);
   const customer = await stripe.customers.create({
     email,
@@ -26,8 +26,8 @@ const createCustomer = async (email, paymentMethodId, pool) => {
   console.log('Stripe customer created:', customer.id);
 
   const result = await pool.query(
-    'UPDATE users SET stripe_customer_id = $1, email = $2 WHERE email = $3 RETURNING *',
-    [customer.id, email, email]
+    'UPDATE users SET stripe_customer_id = $1, email = $2 WHERE id = $3 RETURNING *',
+    [customer.id, email, userId]
   );
   console.log('Database updated with customer ID:', result.rows[0]);
 

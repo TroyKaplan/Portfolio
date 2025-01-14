@@ -43,7 +43,7 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
         );
         
         if (userResult.rows[0]) {
-          await stripe.updateSubscriptionDetails(
+          await stripeService.updateSubscriptionDetails(
             userResult.rows[0].id,
             customerId,
             subscription.id,
@@ -385,15 +385,21 @@ app.post('/api/create-subscription', ensureAuthenticated, async (req, res) => {
   const { paymentMethodId } = req.body;
   
   try {
-    const customer = await createCustomer(req.user.email, paymentMethodId, pool);
+    const customer = await createCustomer(
+      req.user.email,
+      paymentMethodId, 
+      pool,
+      req.user.id
+    );
     const subscription = await createSubscription(customer.id, process.env.STRIPE_PRICE_ID);
 
-    await pool.query(
-      'UPDATE users SET role = $1 WHERE id = $2',
-      ['subscriber', req.user.id]
+    await stripeService.updateSubscriptionDetails(
+      req.user.id,
+      customer.id,
+      subscription.id,
+      subscription.status
     );
 
-    req.user.role = 'subscriber';
     res.json({ success: true });
   } catch (error) {
     console.error('Subscription error:', error);
