@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const axios = require('axios');
@@ -10,15 +11,31 @@ const { ensureAuthenticated, ensureRole } = require('./src/middlewares/auth');
 const WebSocket = require('ws');
 const { Pool } = require('pg');
 const pgSession = require('connect-pg-simple')(session);
-const { createCustomer, createSubscription } = require('./src/services/stripe');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const stripeService = require('./src/services/stripe');
-const { validateEmail, requireEmail } = require('./src/middlewares/validateEmail');
+const http = require('http');
 
-require('dotenv').config();
-
+// Initialize express app
 const app = express();
-const server = require('http').createServer(app);
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Add helper function
+async function updateSubscriptionStatus(pool, customerId, subscriptionId, status, endDate) {
+  const role = status === 'active' ? 'subscriber' : 'user';
+  
+  await pool.query(
+    `UPDATE users 
+     SET subscription_status = $1,
+         role = $2,
+         subscription_id = $3,
+         subscription_end_date = to_timestamp($4)
+     WHERE stripe_customer_id = $5`,
+    [status, role, subscriptionId, endDate, customerId]
+  );
+  
+  console.log(`[SubscriptionService] Updated status for customer ${customerId}: ${status}`);
+}
 
 // Webhook handler
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
@@ -30,138 +47,59 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
     console.log('[Webhook] Received event:', event.type);
 
     switch (event.type) {
-      case 'payment_intent.created':
-        console.log('[Webhook] Payment intent created:', event.data.object.id);
-        break;
-
       case 'payment_intent.succeeded':
         const paymentIntent = event.data.object;
-        console.log('[Webhook] Payment intent succeeded:', paymentIntent.id);
-        
-        // Update subscription status
         if (paymentIntent.metadata.subscriptionId) {
-          console.log('[Webhook] Updating subscription status for:', paymentIntent.metadata.subscriptionId);
-          await pool.query(
-            `UPDATE users 
-             SET subscription_status = 'active',
-                 role = 'subscriber'
-             WHERE stripe_customer_id = $1`,
-            [paymentIntent.customer]
+          const subscription = await stripe.subscriptions.retrieve(paymentIntent.metadata.subscriptionId);
+          await updateSubscriptionStatus(
+            pool,
+            paymentIntent.customer,
+            subscription.id,
+            'active',
+            subscription.current_period_end
           );
         }
         break;
 
-      case 'customer.subscription.created':
-        const newSubscription = event.data.object;
-        console.log('[Webhook] Subscription created:', newSubscription.id);
-        
-        // Store subscription metadata
-        await pool.query(
-          `UPDATE users 
-           SET subscription_id = $1,
-               subscription_status = $2,
-               subscription_start_date = to_timestamp($3),
-               subscription_end_date = to_timestamp($4)
-           WHERE stripe_customer_id = $5`,
-          [
-            newSubscription.id,
-            newSubscription.status,
-            newSubscription.current_period_start,
-            newSubscription.current_period_end,
-            newSubscription.customer
-          ]
-        );
-        break;
-
-      case 'invoice.created':
-        const createdInvoice = event.data.object;
-        console.log('[Webhook] Invoice created:', createdInvoice.id);
-        break;
-
       case 'invoice.paid':
         const paidInvoice = event.data.object;
-        console.log('[Webhook] Invoice paid:', paidInvoice.id);
-        
-        // Update subscription status when invoice is paid
-        await pool.query(
-          `UPDATE users 
-           SET subscription_status = 'active',
-               role = 'subscriber'
-           WHERE stripe_customer_id = $1`,
-          [paidInvoice.customer]
-        );
-        break;
-
-      case 'invoice.payment_succeeded':
-        const successfulInvoice = event.data.object;
-        console.log('[Webhook] Invoice payment succeeded:', successfulInvoice.id);
-        
-        // Update subscription status
-        await pool.query(
-          `UPDATE users 
-           SET subscription_status = 'active',
-               role = 'subscriber'
-           WHERE stripe_customer_id = $1`,
-          [successfulInvoice.customer]
+        const paidSubscription = await stripe.subscriptions.retrieve(paidInvoice.subscription);
+        await updateSubscriptionStatus(
+          pool,
+          paidInvoice.customer,
+          paidSubscription.id,
+          'active',
+          paidSubscription.current_period_end
         );
         break;
 
       case 'invoice.payment_failed':
         const failedInvoice = event.data.object;
-        console.log('[Webhook] Invoice payment failed:', failedInvoice.id);
-        
-        // Update subscription status to failed
-        await pool.query(
-          `UPDATE users 
-           SET subscription_status = 'failed'
-           WHERE stripe_customer_id = $1`,
-          [failedInvoice.customer]
-        );
-        break;
-
-      case 'invoice.finalized':
-        const finalizedInvoice = event.data.object;
-        console.log('[Webhook] Invoice finalized:', finalizedInvoice.id);
-        break;
-
-      case 'customer.subscription.updated':
-        const updatedSubscription = event.data.object;
-        console.log('[Webhook] Subscription updated:', updatedSubscription.id);
-        
-        // Update subscription details
-        await pool.query(
-          `UPDATE users 
-           SET subscription_status = $1,
-               subscription_end_date = to_timestamp($2)
-           WHERE stripe_customer_id = $3`,
-          [
-            updatedSubscription.status,
-            updatedSubscription.current_period_end,
-            updatedSubscription.customer
-          ]
+        await updateSubscriptionStatus(
+          pool,
+          failedInvoice.customer,
+          failedInvoice.subscription,
+          'incomplete',
+          null
         );
         break;
 
       case 'customer.subscription.deleted':
         const deletedSubscription = event.data.object;
-        console.log('[Webhook] Subscription deleted:', deletedSubscription.id);
-        
-        // Update user status
-        await pool.query(
-          `UPDATE users 
-           SET subscription_status = 'canceled',
-               role = 'user',
-               subscription_id = NULL
-           WHERE stripe_customer_id = $1`,
-          [deletedSubscription.customer]
+        await updateSubscriptionStatus(
+          pool,
+          deletedSubscription.customer,
+          null,
+          'inactive',
+          null
         );
         break;
     }
 
     res.json({ received: true });
-  } catch (err) {
-    console.error('[Webhook] Error:', err.message);
-    res.status(400).send(`Webhook Error: ${err.message}`);
+  } catch (error) {
+    console.error('[Webhook] Error:', error);
+    res.status(400).send(`Webhook Error: ${error.message}`);
   }
 });
 
@@ -477,12 +415,10 @@ app.post('/api/create-subscription', ensureAuthenticated, async (req, res) => {
   try {
     console.log('[SubscriptionService] Starting subscription creation for user:', req.user.id);
     
-    // Get or create customer
     let customer = await pool.query('SELECT stripe_customer_id FROM users WHERE id = $1', [req.user.id]);
     let stripeCustomerId = customer.rows[0]?.stripe_customer_id;
     
     if (!stripeCustomerId) {
-      console.log('[SubscriptionService] Creating new Stripe customer');
       const userInfo = await pool.query('SELECT email FROM users WHERE id = $1', [req.user.id]);
       const stripeCustomer = await stripe.customers.create({
         email: userInfo.rows[0].email,
@@ -496,33 +432,36 @@ app.post('/api/create-subscription', ensureAuthenticated, async (req, res) => {
       );
     }
 
-    console.log('[SubscriptionService] Creating subscription with payment intent');
-    
-    // Create the subscription
     const subscription = await stripe.subscriptions.create({
       customer: stripeCustomerId,
       items: [{ price: process.env.STRIPE_PRICE_ID }],
       payment_behavior: 'default_incomplete',
-      payment_settings: { save_default_payment_method: 'on_subscription' },
+      payment_settings: { 
+        payment_method_types: ['card'],
+        save_default_payment_method: 'on_subscription' 
+      },
       expand: ['latest_invoice.payment_intent'],
-      metadata: { userId: req.user.id }
+      metadata: { 
+        userId: req.user.id,
+        subscriptionId: 'pending' // Will be updated after creation
+      }
     });
 
-    console.log('[SubscriptionService] Subscription created:', {
-      id: subscription.id,
-      status: subscription.status,
-      clientSecret: subscription.latest_invoice.payment_intent.client_secret
+    // Update the subscription's metadata with its own ID
+    await stripe.subscriptions.update(subscription.id, {
+      metadata: { 
+        userId: req.user.id,
+        subscriptionId: subscription.id
+      }
     });
 
-    // Update user's subscription details
     await pool.query(
       `UPDATE users 
        SET subscription_status = $1,
            subscription_id = $2,
-           subscription_start_date = NOW(),
-           subscription_end_date = to_timestamp($3)
-       WHERE id = $4`,
-      ['incomplete', subscription.id, subscription.current_period_end, req.user.id]
+           subscription_start_date = NOW()
+       WHERE id = $3`,
+      ['incomplete', subscription.id, req.user.id]
     );
 
     res.json({
@@ -613,7 +552,7 @@ server.on('upgrade', (request, socket, head) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Add after the login route
@@ -844,7 +783,6 @@ setInterval(() => {
 app.get('/api/subscription/status', ensureAuthenticated, async (req, res) => {
   const logPrefix = '[SubscriptionStatus]';
   try {
-    console.log(`${logPrefix} Checking subscription for user:`, req.user.id);
     const result = await pool.query(
       `SELECT subscription_status, subscription_end_date, subscription_id, stripe_customer_id 
        FROM users WHERE id = $1`,
@@ -861,11 +799,12 @@ app.get('/api/subscription/status', ensureAuthenticated, async (req, res) => {
         
         if (stripeSubscription.status !== userData.subscription_status) {
           console.log(`${logPrefix} Updating out-of-sync subscription status from ${userData.subscription_status} to ${stripeSubscription.status}`);
-          await stripeService.updateSubscriptionDetails(
+          await updateSubscriptionStatus(
             pool,
-            req.user.id,
+            userData.stripe_customer_id,
             userData.subscription_id,
-            stripeSubscription.status
+            stripeSubscription.status,
+            stripeSubscription.current_period_end
           );
           userData.subscription_status = stripeSubscription.status;
         }
@@ -873,11 +812,12 @@ app.get('/api/subscription/status', ensureAuthenticated, async (req, res) => {
         console.error(`${logPrefix} Stripe error:`, stripeError);
         if (stripeError.code === 'resource_missing') {
           console.log(`${logPrefix} Subscription not found in Stripe, marking as inactive`);
-          await stripeService.updateSubscriptionDetails(
+          await updateSubscriptionStatus(
             pool,
-            req.user.id,
+            userData.stripe_customer_id,
             null,
-            'inactive'
+            'inactive',
+            null
           );
           userData.subscription_status = 'inactive';
         }
@@ -896,6 +836,13 @@ app.post('/api/user/update-email', ensureAuthenticated, async (req, res) => {
   const { email } = req.body;
   const logPrefix = '[UpdateEmail]';
 
+  if (!email) {
+    return res.status(400).json({
+      error: 'Email is required',
+      code: 'EMAIL_REQUIRED'
+    });
+  }
+
   try {
     if (!validateEmail(email)) {
       return res.status(400).json({ 
@@ -904,18 +851,31 @@ app.post('/api/user/update-email', ensureAuthenticated, async (req, res) => {
       });
     }
 
+    // Check if email is already in use
+    const existingUser = await pool.query(
+      'SELECT id FROM users WHERE email = $1 AND id != $2',
+      [email, req.user.id]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({
+        error: 'Email already in use',
+        code: 'EMAIL_EXISTS'
+      });
+    }
+
     const user = await pool.query(
       'SELECT stripe_customer_id FROM users WHERE id = $1',
       [req.user.id]
     );
 
-    // Update email in database
+    await pool.query('BEGIN');
+
     await pool.query(
       'UPDATE users SET email = $1 WHERE id = $2',
       [email, req.user.id]
     );
 
-    // If user has Stripe customer ID, update email in Stripe
     if (user.rows[0].stripe_customer_id) {
       await stripe.customers.update(
         user.rows[0].stripe_customer_id,
@@ -923,22 +883,55 @@ app.post('/api/user/update-email', ensureAuthenticated, async (req, res) => {
       );
     }
 
+    await pool.query('COMMIT');
     res.json({ message: 'Email updated successfully' });
   } catch (error) {
+    await pool.query('ROLLBACK');
     console.error(`${logPrefix} Error:`, error);
-    res.status(500).json({ message: 'Error updating email' });
+    res.status(500).json({ 
+      error: 'Failed to update email',
+      code: 'UPDATE_FAILED',
+      message: error.message 
+    });
   }
 });
 
 // Add password change endpoint
 app.post('/api/user/change-password', ensureAuthenticated, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
+  const logPrefix = '[ChangePassword]';
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({
+      error: 'Both current and new passwords are required',
+      code: 'MISSING_FIELDS'
+    });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({
+      error: 'New password must be at least 8 characters long',
+      code: 'PASSWORD_TOO_SHORT'
+    });
+  }
+
   try {
     const user = await pool.query('SELECT password FROM users WHERE id = $1', [req.user.id]);
+    
+    if (!user.rows.length) {
+      return res.status(404).json({
+        error: 'User not found',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+
     const isValid = await bcrypt.compare(currentPassword, user.rows[0].password);
     
     if (!isValid) {
-      return res.status(401).json({ message: 'Current password is incorrect' });
+      return res.status(401).json({
+        error: 'Current password is incorrect',
+        code: 'INVALID_CURRENT_PASSWORD'
+      });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -949,100 +942,11 @@ app.post('/api/user/change-password', ensureAuthenticated, async (req, res) => {
     
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
-    console.error('Error changing password:', error);
-    res.status(500).json({ message: 'Error changing password' });
-  }
-});
-
-app.post('/api/create-checkout-session', ensureAuthenticated, async (req, res) => {
-  try {
-    const user = await pool.query('SELECT * FROM users WHERE id = $1', [req.user.id]);
-    const customer = user.rows[0].stripe_customer_id || null;
-
-    // Create or retrieve customer
-    let stripeCustomer;
-    if (!customer) {
-      stripeCustomer = await stripe.customers.create({
-        email: user.rows[0].email,
-        metadata: {
-          userId: req.user.id
-        }
-      });
-      
-      await pool.query(
-        'UPDATE users SET stripe_customer_id = $1 WHERE id = $2',
-        [stripeCustomer.id, req.user.id]
-      );
-    } else {
-      stripeCustomer = await stripe.customers.retrieve(customer);
-    }
-
-    // Create checkout session
-    const session = await stripe.checkout.sessions.create({
-      customer: stripeCustomer.id,
-      payment_method_types: ['card'],
-      mode: 'subscription',
-      line_items: [{
-        price: process.env.STRIPE_PRICE_ID, // Your subscription price ID
-        quantity: 1,
-      }],
-      success_url: `${process.env.CLIENT_URL}/profile?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.CLIENT_URL}/profile`,
-      metadata: {
-        userId: req.user.id
-      },
-      allow_promotion_codes: true,
-      billing_address_collection: 'required',
-      customer_update: {
-        address: 'auto'
-      },
-      payment_method_collection: 'always',
-      subscription_data: {
-        trial_period_days: 7, // Optional: if you want to offer a trial
-        metadata: {
-          userId: req.user.id
-        }
-      }
+    console.error(`${logPrefix} Error:`, error);
+    res.status(500).json({
+      error: 'Failed to change password',
+      code: 'UPDATE_FAILED',
+      message: error.message
     });
-
-    res.json({ sessionId: session.id });
-  } catch (error) {
-    console.error('Checkout session creation error:', error);
-    res.status(500).json({ error: 'Failed to create checkout session' });
-  }
-});
-
-app.post('/api/verify-session', ensureAuthenticated, async (req, res) => {
-  try {
-    const { sessionId } = req.body;
-    
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-    
-    if (session.payment_status === 'paid') {
-      // Double-check subscription status
-      const subscription = await stripe.subscriptions.retrieve(session.subscription);
-      
-      await pool.query(
-        `UPDATE users 
-         SET subscription_status = $1,
-             subscription_id = $2,
-             subscription_start_date = NOW(),
-             subscription_end_date = to_timestamp($3)
-         WHERE id = $4`,
-        [
-          subscription.status,
-          subscription.id,
-          subscription.current_period_end,
-          req.user.id
-        ]
-      );
-      
-      res.json({ success: true });
-    } else {
-      res.status(400).json({ error: 'Payment incomplete' });
-    }
-  } catch (error) {
-    console.error('Session verification error:', error);
-    res.status(500).json({ error: 'Verification failed' });
   }
 });
