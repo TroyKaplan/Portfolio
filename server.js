@@ -12,6 +12,7 @@ const { Pool } = require('pg');
 const pgSession = require('connect-pg-simple')(session);
 const { createCustomer, createSubscription } = require('./src/services/stripe');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripeService = require('./stripeService');
 
 require('dotenv').config();
 
@@ -59,6 +60,9 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
           ['inactive', 'user', subscriptionDeleted.customer]
         );
         break;
+
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
     }
     
     res.json({received: true});
