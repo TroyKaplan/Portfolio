@@ -1,73 +1,57 @@
-import { useEffect } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY!);
+import React, { useState } from 'react';
+import SubscriptionPayment from './SubscriptionPayment';
 
 const SubscriptionButton: React.FC = () => {
-  useEffect(() => {
-    // Check for session_id in URL
-    const query = new URLSearchParams(window.location.search);
-    const sessionId = query.get('session_id');
-
-    if (sessionId) {
-      // Clear the session_id from URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-      
-      // Verify the session
-      checkSession(sessionId);
-    }
-  }, []);
-
-  const checkSession = async (sessionId: string) => {
-    try {
-      const response = await fetch('/api/verify-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ sessionId }),
-      });
-      
-      if (!response.ok) throw new Error('Session verification failed');
-      
-      // Refresh the page or update UI to show subscription status
-      window.location.reload();
-    } catch (error) {
-      console.error('Session verification error:', error);
-    }
-  };
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubscribe = async () => {
     try {
-      const response = await fetch('/api/create-checkout-session', {
+      console.log('[SubscriptionButton] Initiating subscription...');
+      const response = await fetch('/api/create-subscription', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
 
-      if (!response.ok) throw new Error('Failed to create checkout session');
+      if (!response.ok) throw new Error('Failed to create subscription');
 
-      const { sessionId } = await response.json();
-      const stripe = await stripePromise;
-      
-      if (!stripe) throw new Error('Stripe not loaded');
-
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-      
-      if (error) throw error;
+      const data = await response.json();
+      console.log('[SubscriptionButton] Subscription created:', data);
+      setClientSecret(data.clientSecret);
     } catch (error) {
-      console.error('Subscription error:', error);
+      console.error('[SubscriptionButton] Error:', error);
+      setError('Failed to start subscription process');
     }
   };
 
+  const handlePaymentSuccess = () => {
+    console.log('[SubscriptionButton] Payment successful');
+    window.location.reload();
+  };
+
+  const handlePaymentError = (error: string) => {
+    console.error('[SubscriptionButton] Payment error:', error);
+    setError(error);
+    setClientSecret(null);
+  };
+
+  if (clientSecret) {
+    return (
+      <SubscriptionPayment
+        clientSecret={clientSecret}
+        onSuccess={handlePaymentSuccess}
+        onError={handlePaymentError}
+      />
+    );
+  }
+
   return (
-    <button 
-      onClick={handleSubscribe}
-      className="subscribe-button"
-    >
-      Subscribe Now
-    </button>
+    <div>
+      {error && <div className="error-message">{error}</div>}
+      <button onClick={handleSubscribe} className="subscribe-button">
+        Subscribe Now
+      </button>
+    </div>
   );
 };
 

@@ -432,60 +432,66 @@ app.get('/admin-only', ensureRole('admin'), (req, res) => {
 });
 
 // Create subscription endpoint
-app.post('/api/create-subscription', 
-  ensureAuthenticated,
-  requireEmail,
-  async (req, res) => {
-    const logPrefix = '[SubscriptionCreate]';
-    const { paymentMethodId } = req.body;
+app.post('/api/create-subscription', ensureAuthenticated, async (req, res) => {
+  try {
+    console.log('[SubscriptionService] Starting subscription creation for user:', req.user.id);
     
-    try {
-      const user = await pool.query(
-        'SELECT email, stripe_customer_id FROM users WHERE id = $1',
-        [req.user.id]
-      );
-
-      if (!user.rows[0].email) {
-        return res.status(400).json({
-          error: 'Valid email required',
-          code: 'EMAIL_REQUIRED'
-        });
-      }
-
-      let customerId = user.rows[0].stripe_customer_id;
-      
-      if (!customerId) {
-        const customer = await createCustomer(
-          user.rows[0].email,
-          paymentMethodId,
-          pool,
-          req.user.id
-        );
-        customerId = customer.id;
-      }
-
-      const subscription = await createSubscription(customerId, process.env.STRIPE_PRICE_ID);
-      
-      await stripeService.updateSubscriptionDetails(
-        pool,
-        req.user.id,
-        subscription.id,
-        subscription.status
-      );
-
-      res.json({
-        success: true,
-        subscription: subscription
+    // Get or create customer
+    let customer = await pool.query('SELECT stripe_customer_id FROM users WHERE id = $1', [req.user.id]);
+    let stripeCustomerId = customer.rows[0]?.stripe_customer_id;
+    
+    if (!stripeCustomerId) {
+      console.log('[SubscriptionService] Creating new Stripe customer');
+      const userInfo = await pool.query('SELECT email FROM users WHERE id = $1', [req.user.id]);
+      const stripeCustomer = await stripe.customers.create({
+        email: userInfo.rows[0].email,
+        metadata: { userId: req.user.id }
       });
-    } catch (error) {
-      console.error(`${logPrefix} Error:`, error);
-      res.status(500).json({ 
-        error: 'Failed to create subscription',
-        details: error.message 
-      });
+      stripeCustomerId = stripeCustomer.id;
+      
+      await pool.query(
+        'UPDATE users SET stripe_customer_id = $1 WHERE id = $2',
+        [stripeCustomerId, req.user.id]
+      );
     }
+
+    // Create subscription with payment intent
+    console.log('[SubscriptionService] Creating subscription with payment intent');
+    const subscription = await stripe.subscriptions.create({
+      customer: stripeCustomerId,
+      items: [{ price: process.env.STRIPE_PRICE_ID }],
+      payment_behavior: 'default_incomplete',
+      payment_settings: { save_default_payment_method: 'on_subscription' },
+      expand: ['latest_invoice.payment_intent'],
+      metadata: { userId: req.user.id }
+    });
+
+    console.log('[SubscriptionService] Subscription created:', {
+      id: subscription.id,
+      status: subscription.status,
+      clientSecret: subscription.latest_invoice.payment_intent.client_secret
+    });
+
+    // Update user's subscription details
+    await pool.query(
+      `UPDATE users 
+       SET subscription_status = $1,
+           subscription_id = $2,
+           subscription_start_date = NOW(),
+           subscription_end_date = to_timestamp($3)
+       WHERE id = $4`,
+      ['pending', subscription.id, subscription.current_period_end, req.user.id]
+    );
+
+    res.json({
+      subscriptionId: subscription.id,
+      clientSecret: subscription.latest_invoice.payment_intent.client_secret
+    });
+  } catch (error) {
+    console.error('[SubscriptionService] Error:', error);
+    res.status(500).json({ error: 'Failed to create subscription' });
   }
-);
+});
 
 // Get all users (admin only)
 app.get('/api/users', ensureRole('admin'), async (req, res) => {
