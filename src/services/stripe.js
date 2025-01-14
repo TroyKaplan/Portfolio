@@ -32,7 +32,21 @@ const createCustomer = async (email, paymentMethodId, pool) => {
   return customer;
 };
 
+const updateCustomer = async (userId, customerId) => {
+  try {
+    await pool.query(
+      'UPDATE users SET stripe_customer_id = $1 WHERE id = $2',
+      [customerId, userId]
+    );
+    console.log(`Updated user ${userId} with Stripe customer ID ${customerId}`);
+  } catch (error) {
+    console.error('Error updating customer:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   createSubscription,
   createCustomer,
+  updateCustomer,
 }; 

@@ -21,26 +21,24 @@ const server = require('http').createServer(app);
 // Move this BEFORE app.use(express.json())
 app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
   const sig = req.headers['stripe-signature'];
+  console.log('Received webhook with signature:', sig);
+  console.log('Webhook secret:', process.env.STRIPE_WEBHOOK_SECRET);
+  
   let event;
-
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-    console.log('Webhook event received:', event.type);
-  } catch (err) {
-    console.error('Webhook error:', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  try {
+    console.log('Webhook event constructed successfully:', event.type);
+    console.log('Event data:', JSON.stringify(event.data.object, null, 2));
+    
     switch (event.type) {
       case 'customer.subscription.created':
         const subscriptionCreated = event.data.object;
-        console.log('Subscription created:', subscriptionCreated);
-        await pool.query(
-          'UPDATE users SET subscription_status = $1, subscription_id = $2, subscription_start_date = NOW(), subscription_end_date = to_timestamp($3), role = $4 WHERE stripe_customer_id = $5',
-          ['active', subscriptionCreated.id, subscriptionCreated.current_period_end, 'subscriber', subscriptionCreated.customer]
+        console.log('Processing subscription creation for customer:', subscriptionCreated.customer);
+        const result = await pool.query(
+          'UPDATE users SET subscription_status = $1, subscription_id = $2, subscription_start_date = NOW(), subscription_end_date = to_timestamp($3), role = $4, stripe_customer_id = $5 WHERE id = $6 RETURNING *',
+          ['active', subscriptionCreated.id, subscriptionCreated.current_period_end, 'subscriber', subscriptionCreated.customer, req.user.id]
         );
-        console.log('Database updated for subscription creation');
+        console.log('Database update result:', result.rows[0]);
         break;
 
       case 'customer.subscription.updated':
@@ -61,11 +59,16 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
         );
         break;
     }
-
+    
     res.json({received: true});
-  } catch (error) {
-    console.error('Error processing webhook:', error);
-    return res.status(500).send('Error processing webhook');
+  } catch (err) {
+    console.error('Detailed webhook error:', {
+      error: err,
+      message: err.message,
+      stack: err.stack,
+      body: req.body
+    });
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 });
 
@@ -743,20 +746,33 @@ app.get('/api/subscription/status', ensureAuthenticated, async (req, res) => {
     );
     
     const userData = result.rows[0];
-    console.log('Subscription data:', userData);
+    console.log('Raw subscription data:', userData);
 
-    // Check if subscription should be expired
-    if (userData.subscription_end_date) {
-      const endDate = new Date(userData.subscription_end_date);
-      const now = new Date();
-      
-      if (now > endDate && userData.subscription_status !== 'inactive') {
-        console.log('Subscription expired, updating status...');
-        await pool.query(
-          'UPDATE users SET subscription_status = $1, role = $2 WHERE id = $3',
-          ['inactive', 'user', req.user.id]
-        );
-        userData.subscription_status = 'inactive';
+    if (userData.stripe_customer_id && userData.subscription_id) {
+      try {
+        const stripeSubscription = await stripe.subscriptions.retrieve(userData.subscription_id);
+        console.log('Stripe subscription data:', stripeSubscription);
+        
+        // Update local DB if it's out of sync
+        if (stripeSubscription.status !== userData.subscription_status) {
+          await pool.query(
+            'UPDATE users SET subscription_status = $1, role = $2 WHERE id = $3',
+            [stripeSubscription.status === 'active' ? 'active' : 'inactive',
+             stripeSubscription.status === 'active' ? 'subscriber' : 'user',
+             req.user.id]
+          );
+          userData.subscription_status = stripeSubscription.status;
+        }
+      } catch (stripeError) {
+        console.error('Error retrieving Stripe subscription:', stripeError);
+        // If subscription not found in Stripe, mark as inactive
+        if (stripeError.code === 'resource_missing') {
+          await pool.query(
+            'UPDATE users SET subscription_status = $1, role = $2 WHERE id = $3',
+            ['inactive', 'user', req.user.id]
+          );
+          userData.subscription_status = 'inactive';
+        }
       }
     }
 
