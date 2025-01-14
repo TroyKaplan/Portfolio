@@ -31,6 +31,8 @@ interface UserDetail {
   };
   games: GameStat[];
   achievements: Achievement[];
+  subscription_status: string;
+  subscription_end_date: string;
 }
 
 const UserDetails: React.FC = () => {
@@ -150,6 +152,18 @@ const UserDetails: React.FC = () => {
               ))}
             </div>
           )}
+        </div>
+
+        <div className="stats-card">
+          <h2>Subscription Details</h2>
+          <div className="stat-item">
+            <span>Status:</span>
+            <span>{userDetails.subscription_status}</span>
+          </div>
+          <div className="stat-item">
+            <span>Next Payment Date:</span>
+            <span>{new Date(userDetails.subscription_end_date).toLocaleDateString()}</span>
+          </div>
         </div>
       </div>
     </div>

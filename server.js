@@ -102,15 +102,14 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
       case 'invoice.payment_succeeded':
         const invoice = event.data.object;
-        const customerId = invoice.customer;
-        const userId = invoice.metadata.userId; // Assuming you set userId in metadata
-
-        // Update user role to Subscriber
+        // Update subscription status and role
         await pool.query(
-          'UPDATE users SET role = $1 WHERE id = $2',
-          ['Subscriber', userId]
+          `UPDATE users 
+           SET subscription_status = $1, 
+               role = 'subscriber' 
+           WHERE stripe_customer_id = $2`,
+          ['active', invoice.customer]
         );
-        console.log(`[Webhook] Updated user role to Subscriber for user ID: ${userId}`);
         break;
 
       // Add other cases as needed
@@ -691,15 +690,10 @@ const apiRouter = express.Router();
 // Move the profile endpoint to use the router
 apiRouter.get('/user/profile', ensureAuthenticated, async (req, res) => {
   try {
-    console.log('Fetching profile for user:', req.user.id);
     const userResult = await pool.query(
       `SELECT 
-        username,
-        email,
-        role,
-        subscription_status,
-        subscription_start_date,
-        subscription_end_date,
+        username, email, role, subscription_status,
+        subscription_start_date, subscription_end_date,
         total_time_spent
       FROM users 
       WHERE id = $1`,
@@ -707,12 +701,21 @@ apiRouter.get('/user/profile', ensureAuthenticated, async (req, res) => {
     );
 
     if (userResult.rows.length === 0) {
-      console.log('No user found for ID:', req.user.id);
       return res.status(404).json({ message: 'User not found' });
     }
 
-    console.log('Profile data retrieved:', userResult.rows[0]);
-    res.json(userResult.rows[0]);
+    const user = userResult.rows[0];
+
+    // Fallback check: If subscription is active but role isn't subscriber
+    if (user.subscription_status === 'active' && user.role !== 'subscriber') {
+      await pool.query(
+        `UPDATE users SET role = 'subscriber' WHERE id = $1`,
+        [req.user.id]
+      );
+      user.role = 'subscriber';
+    }
+
+    res.json(user);
   } catch (error) {
     console.error('Profile fetch error:', error);
     res.status(500).json({ message: 'Error fetching profile data' });
