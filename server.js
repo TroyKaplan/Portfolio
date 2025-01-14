@@ -158,16 +158,19 @@ app.use(async (req, res, next) => {
 app.use(session({
   store: new pgSession({
     pool,
-    tableName: 'user_sessions'
+    tableName: 'user_sessions',
+    createTableIfMissing: true
   }),
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  proxy: true,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    sameSite: 'none',
+    domain: process.env.NODE_ENV === 'production' ? '.troykaplan.dev' : undefined
   }
 }));
 

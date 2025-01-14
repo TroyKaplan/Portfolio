@@ -1,4 +1,6 @@
 const ensureAuthenticated = (req, res, next) => {
+  console.log('Session ID:', req.sessionID);
+  console.log('Session:', req.session);
   console.log('Auth check - isAuthenticated:', req.isAuthenticated());
   console.log('Auth check - user:', req.user);
   
