@@ -132,6 +132,16 @@ const UserProfile: React.FC = () => {
     }
   });
 
+  const statusMap: Record<string, { label: string; color: string }> = {
+    active: { label: 'Active', color: 'green' },
+    pending: { label: 'Payment Pending', color: 'orange' },
+    inactive: { label: 'Inactive', color: 'red' },
+    canceled: { label: 'Canceled', color: 'gray' }
+  };
+
+  const statusInfo = statusMap[userProfile.subscription_status || 'inactive'] || 
+    { label: userProfile.subscription_status || 'Unknown', color: 'gray' };
+  
   return (
     <div className="user-profile-page">
       <div className="header-section">
