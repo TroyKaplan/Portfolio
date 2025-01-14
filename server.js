@@ -22,14 +22,11 @@ const server = require('http').createServer(app);
 // Move this BEFORE app.use(express.json())
 app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
   const sig = req.headers['stripe-signature'];
-  console.log('Received webhook with signature:', sig);
-  console.log('Webhook secret:', process.env.STRIPE_WEBHOOK_SECRET);
   
   let event;
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     console.log('Webhook event constructed successfully:', event.type);
-    console.log('Event data:', JSON.stringify(event.data.object, null, 2));
     
     switch (event.type) {
       case 'customer.subscription.created':
@@ -47,7 +44,6 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
           await stripeService.updateSubscriptionDetails(
             pool,
             userResult.rows[0].id,
-            customerId,
             subscription.id,
             subscription.status
           );
@@ -55,26 +51,18 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
         break;
 
       case 'customer.subscription.deleted':
-        const subscriptionDeleted = event.data.object;
+        const deletedSubscription = event.data.object;
         await pool.query(
-          'UPDATE users SET subscription_status = $1, role = $2 WHERE stripe_customer_id = $3',
-          ['inactive', 'user', subscriptionDeleted.customer]
+          'UPDATE users SET subscription_status = $1, subscription_id = $2, role = $3, subscription_end_date = NOW() WHERE stripe_customer_id = $4',
+          ['inactive', null, 'user', deletedSubscription.customer]
         );
         break;
-
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
     }
     
     res.json({received: true});
   } catch (err) {
-    console.error('Detailed webhook error:', {
-      error: err,
-      message: err.message,
-      stack: err.stack,
-      body: req.body
-    });
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    console.error('Webhook error:', err.message);
+    res.status(400).send(`Webhook Error: ${err.message}`);
   }
 });
 
