@@ -449,6 +449,7 @@ app.post('/api/create-subscription', ensureAuthenticated, async (req, res) => {
     const subscription = await stripe.subscriptions.create({
       customer: stripeCustomerId,
       items: [{ price: process.env.STRIPE_PRICE_ID }],
+      default_payment_method: req.body.paymentMethodId,
       payment_behavior: 'default_incomplete',
       payment_settings: { save_default_payment_method: 'on_subscription' },
       expand: ['latest_invoice.payment_intent'],
