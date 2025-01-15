@@ -724,25 +724,23 @@ app.get('/api/active-users', ensureRole('admin'), async (req, res) => {
 
 // Track anonymous sessions
 app.post('/api/anonymous-heartbeat', async (req, res) => {
-  const logPrefix = '[AnonymousHeartbeat]';
   try {
-    const sessionId = req.sessionID;
-    console.log(`${logPrefix} Updating anonymous session:`, sessionId);
-
+    const { currentPage } = req.body;
+    
     await pool.query(
-      `INSERT INTO anonymous_sessions (session_id, last_seen, page_views) 
-       VALUES ($1, NOW(), 1)
+      `INSERT INTO anonymous_sessions (session_id, last_seen, current_page) 
+       VALUES ($1, NOW(), $2)
        ON CONFLICT (session_id) 
        DO UPDATE SET 
          last_seen = NOW(),
-         page_views = anonymous_sessions.page_views + 1`,
-      [sessionId]
+         current_page = $2`,
+      [req.sessionID, currentPage]
     );
 
     res.json({ success: true });
   } catch (error) {
-    console.error(`${logPrefix} Error:`, error);
-    res.status(500).json({ message: 'Error updating anonymous session' });
+    console.error('Error updating anonymous activity:', error);
+    res.status(500).json({ message: 'Error updating anonymous activity' });
   }
 });
 

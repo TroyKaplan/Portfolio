@@ -80,23 +80,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    if (user) {
-      const sendHeartbeat = () => {
-        const currentPage = window.location.pathname;
+    const sendHeartbeat = () => {
+      const currentPage = window.location.pathname;
+      
+      if (user) {
         userService.sendHeartbeat({ currentPage })
           .catch(error => {
             console.error('Heartbeat failed:', error.response?.data || error.message);
           });
-      };
+      } else {
+        // Send anonymous heartbeat if no user is logged in
+        userService.sendAnonymousHeartbeat({ currentPage })
+          .catch(error => {
+            console.error('Anonymous heartbeat failed:', error.response?.data || error.message);
+          });
+      }
+    };
 
-      // Send initial heartbeat
-      sendHeartbeat();
-      
-      // Set up interval
-      const heartbeatInterval = setInterval(sendHeartbeat, 30000);
+    // Send initial heartbeat
+    sendHeartbeat();
+    
+    // Set up interval
+    const heartbeatInterval = setInterval(sendHeartbeat, 30000);
 
-      return () => clearInterval(heartbeatInterval);
-    }
+    return () => clearInterval(heartbeatInterval);
   }, [user]);
 
   return (
