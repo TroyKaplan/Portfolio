@@ -14,6 +14,8 @@ export const userService = {
   getVisitorStats: () => api.get('/api/visitor-stats'),
   updateRole: (userId: string, role: string) => 
     api.post('/api/update-role', { userId, role }),
-  sendHeartbeat: () => api.post('/api/auth/heartbeat'),
-  sendAnonymousHeartbeat: () => api.post('/api/anonymous-heartbeat')
+  sendHeartbeat: (data: { currentPage: string; currentGame?: string }) => 
+    api.post('/api/auth/heartbeat', data),
+  sendAnonymousHeartbeat: (data: { currentPage: string }) => 
+    api.post('/api/anonymous-heartbeat', data)
 }; 

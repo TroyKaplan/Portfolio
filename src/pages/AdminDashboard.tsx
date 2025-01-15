@@ -43,18 +43,31 @@ const AdminDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
+  const [activeUserDetails, setActiveUserDetails] = useState<{
+    authenticated: Array<{
+      username: string;
+      current_page: string;
+      current_game?: string;
+      last_seen: string;
+    }>;
+    anonymous: {
+      totalCount: number;
+      activeCount: number;
+      currentPages: string[];
+    };
+    totalActive: number;
+  }>({
+    authenticated: [],
+    anonymous: { totalCount: 0, activeCount: 0, currentPages: [] },
+    totalActive: 0
+  });
 
   const fetchActiveUsers = async () => {
     try {
       const response = await userService.getActiveUsers();
-      setActiveUsers(response.data.authenticated);
-      setAnonymousCount(response.data.anonymous.length);
-      setTotalActive(response.data.totalActive);
+      setActiveUserDetails(response.data);
     } catch (error) {
       console.error('Error fetching active users:', error);
-      setActiveUsers([]);
-      setAnonymousCount(0);
-      setTotalActive(0);
     }
   };
 
@@ -152,118 +165,41 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="admin-dashboard">
-      <h1>User Management</h1>
-      
-      <div className="active-users-summary">
-        <h2>Active Users: {activeCount}</h2>
-        <div className="active-users-list">
-          {activeUsers.map(user => (
-            <div key={user.username} className="active-user-item">
-              {user.username} - Last seen: {new Date(user.last_seen).toLocaleTimeString()}
-            </div>
-          ))}
+      <h2>Live Activity</h2>
+      <div className="activity-summary">
+        <div className="stat-card">
+          <h3>Total Active Users</h3>
+          <p className="stat-value">{activeUserDetails.totalActive}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Logged In Users</h3>
+          <p className="stat-value">{activeUserDetails.authenticated.length}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Anonymous Users</h3>
+          <p className="stat-value">{activeUserDetails.anonymous.activeCount}</p>
         </div>
       </div>
 
-      <div className="visitor-stats">
-        <h2>Visitor Statistics</h2>
-        
-        {/* Current Stats */}
-        <div className="current-stats">
-          <h3>Current Activity</h3>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-value">{visitorStats?.current?.active_anonymous || 0}</div>
-              <div className="stat-label">Active Anonymous Users</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{visitorStats?.current?.total_anonymous || 0}</div>
-              <div className="stat-label">Total Anonymous Sessions</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{activeCount}</div>
-              <div className="stat-label">Active Registered Users</div>
-            </div>
+      <div className="active-users-list">
+        <h3>Active Users Details</h3>
+        {activeUserDetails.authenticated.map(user => (
+          <div key={user.username} className="user-activity-card">
+            <span className="username">{user.username}</span>
+            <span className="location">
+              {user.current_game ? `Playing ${user.current_game}` : `On ${user.current_page}`}
+            </span>
+            <span className="last-seen">
+              Last active: {new Date(user.last_seen).toLocaleTimeString()}
+            </span>
           </div>
-        </div>
-
-        {/* Aggregate Stats */}
-        <div className="aggregate-stats">
-          <h3>Summary</h3>
-          {visitorStats?.aggregates?.map(stat => (
-            <div key={stat.period} className="period-stats">
-              <h4>{stat.period.charAt(0).toUpperCase() + stat.period.slice(1)}</h4>
-              <p>Anonymous Users: {stat.total_anonymous}</p>
-              <p>Registered Users: {stat.total_registered}</p>
-              <p>Peak Concurrent: {stat.peak_users}</p>
-              <p>Avg Session: {Math.round(stat.avg_duration / 60)} minutes</p>
-            </div>
-          )) || <p>No aggregate data available</p>}
-        </div>
-
-        {/* Historical Data */}
-        <div className="historical-stats">
-          <h3>Historical Data</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Anonymous</th>
-                <th>Registered</th>
-                <th>Peak Users</th>
-                <th>Avg Session</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visitorStats?.historical?.map(day => (
-                <tr key={day.date}>
-                  <td>{new Date(day.date).toLocaleDateString()}</td>
-                  <td>{day.anonymous_visitors}</td>
-                  <td>{day.registered_visitors}</td>
-                  <td>{day.peak_concurrent_users}</td>
-                  <td>{formatTime(parseInt(day.average_session_duration))}</td>
-                </tr>
-              )) || <tr><td colSpan={5}>No historical data available</td></tr>}
-            </tbody>
-          </table>
-        </div>
+        ))}
       </div>
 
-      <table className="user-table">
-        <thead>
-          <tr>
-            <th>Username</th>
-            <th>Role</th>
-            <th>Created At</th>
-            <th>Last Login</th>
-            <th>Total Time</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map(user => (
-            <tr key={user.id}>
-              <td>{user.username}</td>
-              <td>
-                <select
-                  value={user.role}
-                  onChange={e => updateRole(user.id, e.target.value as 'user' | 'subscriber' | 'admin')}
-                >
-                  <option value="user">User</option>
-                  <option value="subscriber">Subscriber</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </td>
-              <td>{new Date(user.created_at).toLocaleDateString()}</td>
-              <td>{user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}</td>
-              <td>{formatTime(user.total_time_spent)}</td>
-              <td>
-                <button onClick={() => viewUserDetails(user.id)}>View Details</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="anonymous-activity">
+        <h3>Anonymous Activity</h3>
+        <p>Current pages being viewed: {activeUserDetails.anonymous.currentPages.join(', ')}</p>
+      </div>
     </div>
   );
 };

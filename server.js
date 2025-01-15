@@ -628,21 +628,22 @@ app.get('/api/auth/current-user', (req, res) => {
   }
 });
 
-// Track active users
+// Track active users with page info
 app.post('/api/auth/heartbeat', ensureAuthenticated, async (req, res) => {
+  const { currentPage, currentGame } = req.body;
   try {
-    // Update active users
     await pool.query(
-      `INSERT INTO active_users (session_id, user_id, username, last_seen) 
-       VALUES ($1, $2, $3, NOW()) 
+      `INSERT INTO active_users (session_id, user_id, username, last_seen, current_page, current_game) 
+       VALUES ($1, $2, $3, NOW(), $4, $5) 
        ON CONFLICT (user_id) 
        DO UPDATE SET 
          last_seen = NOW(),
-         session_id = $1`,
-      [req.sessionID, req.user.id, req.user.username]
+         session_id = $1,
+         current_page = $4,
+         current_game = $5`,
+      [req.sessionID, req.user.id, req.user.username, currentPage, currentGame]
     );
 
-    // Update total time spent
     await pool.query(
       `UPDATE users 
        SET total_time_spent = COALESCE(total_time_spent, 0) + 30
@@ -657,29 +658,40 @@ app.post('/api/auth/heartbeat', ensureAuthenticated, async (req, res) => {
   }
 });
 
-// Get active users (admin only)
+// Get active users with enhanced info
 app.get('/api/active-users', ensureRole('admin'), async (req, res) => {
   try {
-    // Get authenticated active users
     const authenticatedUsers = await pool.query(
-      `SELECT u.id, u.username, u.role, u.email, au.last_seen
+      `SELECT 
+        u.id, 
+        u.username, 
+        u.role, 
+        au.last_seen,
+        au.current_page,
+        au.current_game
        FROM users u
        INNER JOIN active_users au ON u.id = au.user_id
        WHERE au.last_seen > NOW() - INTERVAL '10 minutes'
        ORDER BY au.last_seen DESC`
     );
     
-    // Get anonymous users
-    const anonymousUsers = await pool.query(
-      `SELECT session_id, last_seen, device_info
+    const anonymousStats = await pool.query(
+      `SELECT 
+        COUNT(*) as total_count,
+        COUNT(CASE WHEN last_seen > NOW() - INTERVAL '5 minutes' THEN 1 END) as active_count,
+        array_agg(DISTINCT current_page) as current_pages
        FROM anonymous_sessions
        WHERE last_seen > NOW() - INTERVAL '10 minutes'`
     );
 
     res.json({
       authenticated: authenticatedUsers.rows,
-      anonymous: anonymousUsers.rows,
-      totalActive: authenticatedUsers.rows.length + anonymousUsers.rows.length
+      anonymous: {
+        totalCount: parseInt(anonymousStats.rows[0].total_count),
+        activeCount: parseInt(anonymousStats.rows[0].active_count),
+        currentPages: anonymousStats.rows[0].current_pages || []
+      },
+      totalActive: authenticatedUsers.rows.length + parseInt(anonymousStats.rows[0].active_count)
     });
   } catch (error) {
     console.error('Error fetching active users:', error);
