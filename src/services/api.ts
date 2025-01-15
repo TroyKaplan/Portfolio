@@ -17,5 +17,7 @@ export const userService = {
   sendHeartbeat: (data: { currentPage: string }) => 
     api.post('/api/auth/heartbeat', data),
   sendAnonymousHeartbeat: (data: { currentPage: string }) => 
-    api.post('/api/anonymous-heartbeat', data)
+    api.post('/api/anonymous-heartbeat', data),
+  deleteUser: (userId: string) => 
+    api.delete(`/api/users/${userId}`)
 }; 

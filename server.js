@@ -1056,3 +1056,30 @@ cron.schedule('* * * * *', async () => {
     console.error('Error collecting visitor analytics:', error);
   }
 });
+
+app.delete('/api/users/:userId', ensureRole('admin'), async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Start a transaction
+    await pool.query('BEGIN');
+    
+    // Delete from all related tables
+    await pool.query('DELETE FROM active_users WHERE user_id = $1', [userId]);
+    await pool.query('DELETE FROM user_sessions WHERE user_id = $1', [userId]);
+    await pool.query('DELETE FROM user_preferences WHERE user_id = $1', [userId]);
+    await pool.query('DELETE FROM game_stats WHERE user_id = $1', [userId]);
+    await pool.query('DELETE FROM achievements WHERE user_id = $1', [userId]);
+    
+    // Finally delete the user
+    await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+    
+    await pool.query('COMMIT');
+    
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    await pool.query('ROLLBACK');
+    console.error('Error deleting user:', error);
+    res.status(500).json({ message: 'Error deleting user' });
+  }
+});

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { formatTimeSpent, formatDetailedTime } from '../utils/timeFormatters';
 import './UserDetails.css';
+import { userService } from '../services/api';
 
 interface GameStat {
   game_name: string;
@@ -40,6 +41,8 @@ const UserDetails: React.FC = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const [userDetails, setUserDetails] = useState<UserDetail | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -53,6 +56,28 @@ const UserDetails: React.FC = () => {
 
     fetchUserDetails();
   }, [userId]);
+
+  const handleDeleteUser = async (userId: string | undefined) => {
+    if (!userId) return;
+    
+    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setError('');
+
+    try {
+      await userService.deleteUser(userId);
+      navigate('/admin', { 
+        state: { message: 'User deleted successfully' } 
+      });
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Error deleting user');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (!userDetails) return <div>Loading...</div>;
 
@@ -166,6 +191,18 @@ const UserDetails: React.FC = () => {
             <span>{new Date(userDetails.subscription_end_date).toLocaleDateString()}</span>
           </div>
         </div>
+      </div>
+
+      <div className="danger-zone">
+        <h3>Danger Zone</h3>
+        <button 
+          className="delete-button"
+          onClick={() => handleDeleteUser(userId)}
+          disabled={isDeleting}
+        >
+          {isDeleting ? 'Deleting...' : 'Delete Account'}
+        </button>
+        {error && <div className="error-message">{error}</div>}
       </div>
     </div>
   );
