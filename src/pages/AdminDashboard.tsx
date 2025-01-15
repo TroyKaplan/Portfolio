@@ -64,14 +64,27 @@ const AdminDashboard: React.FC = () => {
 
   const fetchActiveUsers = async () => {
     try {
+      console.log('Fetching active users...');
       const response = await userService.getActiveUsers();
+      console.log('Active users response:', response.data);
       setActiveUserDetails(response.data);
       setActiveUsers(response.data.authenticated);
       setActiveCount(response.data.authenticated.length);
       setAnonymousCount(response.data.anonymous.count);
       setTotalActive(response.data.totalActive);
     } catch (error) {
-      console.error('Error fetching active users:', error);
+      const err = error as any;
+      console.error('Error fetching active users:', {
+        message: err?.response?.data?.message || err?.message || 'Unknown error',
+        status: err?.response?.status || 500,
+        details: err?.response?.data || err
+      });
+      setError('Failed to fetch active users');
+      setActiveUserDetails({
+        authenticated: [],
+        anonymous: { count: 0, currentPages: [] },
+        totalActive: 0
+      });
     }
   };
 

@@ -636,9 +636,14 @@ app.get('/api/auth/current-user', (req, res) => {
 
 // Track active users
 app.post('/api/auth/heartbeat', ensureAuthenticated, async (req, res) => {
+  const logPrefix = '[Heartbeat]';
   try {
-    const { currentPage } = req.body;
-    
+    console.log(`${logPrefix} Request:`, {
+      user: req.user,
+      currentPage: req.body.currentPage,
+      sessionId: req.sessionID
+    });
+
     await pool.query(
       `INSERT INTO active_users (session_id, user_id, username, last_seen, current_page) 
        VALUES ($1, $2, $3, NOW(), $4) 
@@ -647,19 +652,17 @@ app.post('/api/auth/heartbeat', ensureAuthenticated, async (req, res) => {
          last_seen = NOW(),
          session_id = $1,
          current_page = $4`,
-      [req.sessionID, req.user.id, req.user.username, currentPage]
+      [req.sessionID, req.user.id, req.user.username, req.body.currentPage]
     );
 
-    await pool.query(
-      `UPDATE users 
-       SET total_time_spent = COALESCE(total_time_spent, 0) + 30
-       WHERE id = $1`,
-      [req.user.id]
-    );
-
+    console.log(`${logPrefix} Success for user:`, req.user.username);
     res.json({ success: true });
   } catch (error) {
-    console.error('Error updating activity:', error);
+    console.error(`${logPrefix} Error:`, {
+      message: error.message,
+      code: error.code,
+      detail: error.detail
+    });
     res.status(500).json({ message: 'Error updating activity' });
   }
 });
