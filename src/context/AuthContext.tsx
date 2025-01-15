@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect } from 'react';
 import { getCurrentUser } from '../services/auth';
 import axios from 'axios';
 import { AuthError } from '../types/auth';
+import { userService } from '../services/api';
 
 interface User {
   id: string;
@@ -80,15 +81,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (user) {
-      const heartbeat = setInterval(() => {
+      const sendHeartbeat = () => {
         const currentPage = window.location.pathname;
-        axios.post('/api/auth/heartbeat', { currentPage })
+        userService.sendHeartbeat({ currentPage })
           .catch(error => {
-            console.error('Heartbeat failed:', error);
+            console.error('Heartbeat failed:', error.response?.data || error.message);
           });
-      }, 30000);
+      };
 
-      return () => clearInterval(heartbeat);
+      // Send initial heartbeat
+      sendHeartbeat();
+      
+      // Set up interval
+      const heartbeatInterval = setInterval(sendHeartbeat, 30000);
+
+      return () => clearInterval(heartbeatInterval);
     }
   }, [user]);
 
