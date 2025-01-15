@@ -197,10 +197,16 @@ const pool = new Pool({
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
+  port: parseInt(process.env.DB_PORT || '5432'),
   ssl: process.env.NODE_ENV === 'production' ? {
     rejectUnauthorized: false
   } : false
+});
+
+// Add connection error handling
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
+  process.exit(-1);
 });
 
 // Test database connection
@@ -661,15 +667,28 @@ app.post('/api/auth/heartbeat', ensureAuthenticated, async (req, res) => {
 // Get active users (admin only)
 app.get('/api/active-users', ensureRole('admin'), async (req, res) => {
   try {
+    console.log('Fetching active users...');
+    
+    // Test the connection first
+    await pool.query('SELECT NOW()');
+    
+    // Get authenticated active users
     const authenticatedUsers = await pool.query(
       `SELECT 
-        u.id, u.username, u.role, u.email, au.last_seen, au.current_page
+        u.id, 
+        u.username, 
+        u.role, 
+        u.email, 
+        au.last_seen,
+        au.current_page
        FROM users u
        INNER JOIN active_users au ON u.id = au.user_id
        WHERE au.last_seen > NOW() - INTERVAL '5 minutes'
        ORDER BY au.last_seen DESC`
     );
+    console.log('Authenticated users found:', authenticatedUsers.rows.length);
     
+    // Get anonymous users
     const anonymousStats = await pool.query(
       `SELECT 
         COUNT(*) as count,
@@ -677,18 +696,29 @@ app.get('/api/active-users', ensureRole('admin'), async (req, res) => {
        FROM anonymous_sessions
        WHERE last_seen > NOW() - INTERVAL '5 minutes'`
     );
+    console.log('Anonymous stats:', anonymousStats.rows[0]);
 
-    res.json({
+    const response = {
       authenticated: authenticatedUsers.rows,
       anonymous: {
         count: parseInt(anonymousStats.rows[0].count),
         currentPages: anonymousStats.rows[0].current_pages || []
       },
       totalActive: authenticatedUsers.rows.length + parseInt(anonymousStats.rows[0].count)
-    });
+    };
+
+    console.log('Sending response:', response);
+    res.json(response);
   } catch (error) {
-    console.error('Error fetching active users:', error);
-    res.status(500).json({ message: 'Error fetching active users' });
+    console.error('Detailed error in /api/active-users:', {
+      message: error.message,
+      stack: error.stack,
+      query: error.query
+    });
+    res.status(500).json({ 
+      message: 'Error fetching active users',
+      details: error.message
+    });
   }
 });
 
@@ -982,6 +1012,22 @@ app.post('/api/user/change-password', ensureAuthenticated, async (req, res) => {
       error: 'Failed to change password',
       code: 'UPDATE_FAILED',
       message: error.message
+    });
+  }
+});
+
+// Add this near your other endpoints
+app.get('/api/health/db', async (req, res) => {
+  try {
+    // Test query
+    await pool.query('SELECT NOW()');
+    res.json({ status: 'healthy', message: 'Database connection successful' });
+  } catch (error) {
+    console.error('Database health check failed:', error);
+    res.status(500).json({ 
+      status: 'unhealthy', 
+      message: 'Database connection failed',
+      error: error.message 
     });
   }
 });
