@@ -14,6 +14,8 @@ interface VisitorStats {
     averageAuthenticated: number;
     averageAnonymous: number;
     peakConcurrent: number;
+    newUsers: number;
+    totalUsers: number;
   };
   dailyStats: Array<{
     date: string;
@@ -21,6 +23,7 @@ interface VisitorStats {
     authenticated_users: number;
     anonymous_users: number;
     peak_concurrent: number;
+    new_users: number;
   }>;
 }
 
@@ -178,8 +181,8 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="admin-dashboard">
-      <h1>User Management</h1>
-      
+      <h1>Admin Dashboard</h1>
+
       <div className="active-users-summary">
         <h2>Live Activity</h2>
         <div className="stats-grid">
@@ -220,78 +223,114 @@ const AdminDashboard: React.FC = () => {
 
       {visitorStats && (
         <div className="visitor-stats">
-          <h3>30-Day Statistics</h3>
-          <div className="summary">
-            <div>
-              <h4>Average Daily Users</h4>
-              <p>Total: {visitorStats.summary.averageTotal}</p>
-              <p>Authenticated: {visitorStats.summary.averageAuthenticated}</p>
-              <p>Anonymous: {visitorStats.summary.averageAnonymous}</p>
+          <h2 className="stats-header">30-Day Analytics Overview</h2>
+          
+          <div className="stats-grid">
+            <div className="stats-section">
+              <h3>Daily Averages</h3>
+              <div className="stats-cards">
+                <div className="stat-card">
+                  <div className="stat-value">{visitorStats.summary.averageTotal}</div>
+                  <div className="stat-label">Total Users</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value">{visitorStats.summary.averageAuthenticated}</div>
+                  <div className="stat-label">Registered Users</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value">{visitorStats.summary.averageAnonymous}</div>
+                  <div className="stat-label">Anonymous Users</div>
+                </div>
+              </div>
             </div>
-            <div>
-              <h4>Peak Concurrent Users</h4>
-              <p>{visitorStats.summary.peakConcurrent}</p>
+
+            <div className="stats-section">
+              <h3>Growth & Peaks</h3>
+              <div className="stats-cards">
+                <div className="stat-card highlight">
+                  <div className="stat-value">{visitorStats.summary.newUsers}</div>
+                  <div className="stat-label">New Users This Month</div>
+                </div>
+                <div className="stat-card highlight">
+                  <div className="stat-value">{visitorStats.summary.totalUsers}</div>
+                  <div className="stat-label">Total Registered Users</div>
+                </div>
+                <div className="stat-card highlight">
+                  <div className="stat-value">{visitorStats.summary.peakConcurrent}</div>
+                  <div className="stat-label">Peak Concurrent Users</div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="historical-data">
-            <h4>Daily Breakdown</h4>
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Average Users</th>
-                  <th>Peak Users</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visitorStats.dailyStats.map(day => (
-                  <tr key={day.date}>
-                    <td>{new Date(day.date).toLocaleDateString()}</td>
-                    <td>{day.total_users}</td>
-                    <td>{day.peak_concurrent}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+            <div className="historical-data">
+              <h3>Daily Breakdown</h3>
+              <div className="table-container">
+                <table className="historical-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>New Users</th>
+                      <th>Total Users</th>
+                      <th>Peak Concurrent</th>
+                      <th>Daily Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visitorStats.dailyStats.map(day => (
+                      <tr key={day.date}>
+                        <td>{new Date(day.date).toLocaleDateString()}</td>
+                        <td>{day.new_users}</td>
+                        <td>{day.total_users}</td>
+                        <td>{day.peak_concurrent}</td>
+                        <td>{day.total_users}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      <table className="user-table">
-        <thead>
-          <tr>
-            <th>Username</th>
-            <th>Role</th>
-            <th>Created At</th>
-            <th>Last Login</th>
-            <th>Total Time</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map(user => (
-            <tr key={user.id}>
-              <td>{user.username}</td>
-              <td>
-                <select
-                  value={user.role}
-                  onChange={e => updateRole(user.id, e.target.value as 'user' | 'subscriber' | 'admin')}
-                >
-                  <option value="user">User</option>
-                  <option value="subscriber">Subscriber</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </td>
-              <td>{new Date(user.created_at).toLocaleDateString()}</td>
-              <td>{user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}</td>
-              <td>{formatTime(user.total_time_spent)}</td>
-              <td>
-                <button onClick={() => viewUserDetails(user.id)}>View Details</button>
-              </td>
+      <div className="user-management">
+        <h2>User Management</h2>
+        <table className="user-table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Created At</th>
+              <th>Last Login</th>
+              <th>Total Time</th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.map(user => (
+              <tr key={user.id}>
+                <td>{user.username}</td>
+                <td>
+                  <select
+                    value={user.role}
+                    onChange={e => updateRole(user.id, e.target.value as 'user' | 'subscriber' | 'admin')}
+                  >
+                    <option value="user">User</option>
+                    <option value="subscriber">Subscriber</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </td>
+                <td>{new Date(user.created_at).toLocaleDateString()}</td>
+                <td>{user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}</td>
+                <td>{formatTime(user.total_time_spent)}</td>
+                <td>
+                  <button onClick={() => viewUserDetails(user.id)}>View Details</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

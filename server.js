@@ -833,49 +833,62 @@ app.use('/api', apiRouter);
 // Add this before the catch-all route
 app.get('/api/visitor-stats', ensureRole('admin'), async (req, res) => {
   try {
-    // Get 30-day summary with daily averages
-    const monthlyStats = await pool.query(`
-      WITH daily_stats AS (
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const stats = await pool.query(`
+      WITH daily_metrics AS (
         SELECT 
-          date,
-          ROUND(AVG(total_users)) as avg_total_users,
-          ROUND(AVG(authenticated_users)) as avg_auth_users,
-          ROUND(AVG(anonymous_users)) as avg_anon_users,
-          MAX(total_users) as peak_users
-        FROM visitor_analytics
-        WHERE timestamp > NOW() - INTERVAL '30 days'
-        GROUP BY date
+          va.date,
+          ROUND(AVG(va.total_users)) as avg_total_users,
+          ROUND(AVG(va.authenticated_users)) as avg_auth_users,
+          ROUND(AVG(va.anonymous_users)) as avg_anon_users,
+          MAX(va.total_users) as peak_concurrent,
+          COALESCE(dus.new_users_count, 0) as new_users,
+          COALESCE(dus.total_users_count, 0) as total_users
+        FROM visitor_analytics va
+        LEFT JOIN daily_user_stats dus ON va.date = dus.date
+        WHERE va.date >= $1
+        GROUP BY va.date, dus.new_users_count, dus.total_users_count
+      ),
+      summary_metrics AS (
+        SELECT 
+          ROUND(AVG(avg_total_users)) as average_total,
+          ROUND(AVG(avg_auth_users)) as average_authenticated,
+          ROUND(AVG(avg_anon_users)) as average_anonymous,
+          MAX(peak_concurrent) as peak_concurrent,
+          SUM(new_users) as total_new_users,
+          MAX(total_users) as total_users
+        FROM daily_metrics
       )
       SELECT 
-        date::TEXT,
-        avg_total_users as total_users,
-        avg_auth_users as authenticated_users,
-        avg_anon_users as anonymous_users,
-        peak_users as peak_concurrent
-      FROM daily_stats
-      ORDER BY date DESC
-    `);
+        json_build_object(
+          'summary', json_build_object(
+            'averageTotal', average_total,
+            'averageAuthenticated', average_authenticated,
+            'averageAnonymous', average_anonymous,
+            'peakConcurrent', peak_concurrent,
+            'newUsers', total_new_users,
+            'totalUsers', total_users
+          ),
+          'dailyStats', (
+            SELECT json_agg(
+              json_build_object(
+                'date', date,
+                'total_users', avg_total_users,
+                'authenticated_users', avg_auth_users,
+                'anonymous_users', avg_anon_users,
+                'peak_concurrent', peak_concurrent,
+                'new_users', new_users
+              ) ORDER BY date DESC
+            )
+            FROM daily_metrics
+          )
+        ) as stats
+      FROM summary_metrics;
+    `, [thirtyDaysAgo.toISOString()]);
 
-    // Calculate overall averages
-    const averages = await pool.query(`
-      SELECT 
-        ROUND(AVG(total_users)) as avg_total_users,
-        ROUND(AVG(authenticated_users)) as avg_auth_users,
-        ROUND(AVG(anonymous_users)) as avg_anon_users,
-        MAX(total_users) as peak_users
-      FROM visitor_analytics
-      WHERE timestamp > NOW() - INTERVAL '30 days'
-    `);
-
-    res.json({
-      summary: {
-        averageTotal: averages.rows[0].avg_total_users || 0,
-        averageAuthenticated: averages.rows[0].avg_auth_users || 0,
-        averageAnonymous: averages.rows[0].avg_anon_users || 0,
-        peakConcurrent: averages.rows[0].peak_users || 0
-      },
-      dailyStats: monthlyStats.rows
-    });
+    res.json(stats.rows[0].stats);
   } catch (error) {
     console.error('Error fetching visitor statistics:', error);
     res.status(500).json({ message: 'Error fetching statistics' });
