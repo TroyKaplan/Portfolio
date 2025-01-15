@@ -43,18 +43,35 @@ const AdminDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
+  const [activeUserDetails, setActiveUserDetails] = useState<{
+    authenticated: Array<{
+      username: string;
+      current_page: string;
+      last_seen: string;
+      role: string;
+      email: string;
+    }>;
+    anonymous: {
+      count: number;
+      currentPages: string[];
+    };
+    totalActive: number;
+  }>({
+    authenticated: [],
+    anonymous: { count: 0, currentPages: [] },
+    totalActive: 0
+  });
 
   const fetchActiveUsers = async () => {
     try {
       const response = await userService.getActiveUsers();
+      setActiveUserDetails(response.data);
       setActiveUsers(response.data.authenticated);
-      setAnonymousCount(response.data.anonymous.length);
+      setActiveCount(response.data.authenticated.length);
+      setAnonymousCount(response.data.anonymous.count);
       setTotalActive(response.data.totalActive);
     } catch (error) {
       console.error('Error fetching active users:', error);
-      setActiveUsers([]);
-      setAnonymousCount(0);
-      setTotalActive(0);
     }
   };
 
@@ -155,11 +172,38 @@ const AdminDashboard: React.FC = () => {
       <h1>User Management</h1>
       
       <div className="active-users-summary">
-        <h2>Active Users: {activeCount}</h2>
+        <h2>Live Activity</h2>
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-value">{activeUserDetails.totalActive}</div>
+            <div className="stat-label">Total Active Users</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">{activeUserDetails.authenticated.length}</div>
+            <div className="stat-label">Active Registered Users</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">{activeUserDetails.anonymous.count}</div>
+            <div className="stat-label">Anonymous Users</div>
+          </div>
+        </div>
+
         <div className="active-users-list">
-          {activeUsers.map(user => (
+          <h3>Active Users</h3>
+          {activeUserDetails.authenticated.map(user => (
             <div key={user.username} className="active-user-item">
-              {user.username} - Last seen: {new Date(user.last_seen).toLocaleTimeString()}
+              <div className="user-info">
+                <span className="username">{user.username}</span>
+                <span className="role">{user.role}</span>
+              </div>
+              <div className="activity-info">
+                <span className="current-page">
+                  {user.current_page || 'Browsing'}
+                </span>
+                <span className="last-seen">
+                  Last seen: {new Date(user.last_seen).toLocaleTimeString()}
+                </span>
+              </div>
             </div>
           ))}
         </div>

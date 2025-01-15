@@ -660,26 +660,30 @@ app.post('/api/auth/heartbeat', ensureAuthenticated, async (req, res) => {
 // Get active users (admin only)
 app.get('/api/active-users', ensureRole('admin'), async (req, res) => {
   try {
-    // Get authenticated active users
     const authenticatedUsers = await pool.query(
-      `SELECT u.id, u.username, u.role, u.email, au.last_seen
+      `SELECT 
+        u.id, u.username, u.role, u.email, au.last_seen, au.current_page
        FROM users u
        INNER JOIN active_users au ON u.id = au.user_id
-       WHERE au.last_seen > NOW() - INTERVAL '10 minutes'
+       WHERE au.last_seen > NOW() - INTERVAL '5 minutes'
        ORDER BY au.last_seen DESC`
     );
     
-    // Get anonymous users
-    const anonymousUsers = await pool.query(
-      `SELECT session_id, last_seen, device_info
+    const anonymousStats = await pool.query(
+      `SELECT 
+        COUNT(*) as count,
+        array_agg(DISTINCT current_page) as current_pages
        FROM anonymous_sessions
-       WHERE last_seen > NOW() - INTERVAL '10 minutes'`
+       WHERE last_seen > NOW() - INTERVAL '5 minutes'`
     );
 
     res.json({
       authenticated: authenticatedUsers.rows,
-      anonymous: anonymousUsers.rows,
-      totalActive: authenticatedUsers.rows.length + anonymousUsers.rows.length
+      anonymous: {
+        count: parseInt(anonymousStats.rows[0].count),
+        currentPages: anonymousStats.rows[0].current_pages || []
+      },
+      totalActive: authenticatedUsers.rows.length + parseInt(anonymousStats.rows[0].count)
     });
   } catch (error) {
     console.error('Error fetching active users:', error);
