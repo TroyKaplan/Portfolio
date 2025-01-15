@@ -669,9 +669,6 @@ app.get('/api/active-users', ensureRole('admin'), async (req, res) => {
   try {
     console.log('Fetching active users...');
     
-    // Test the connection first
-    await pool.query('SELECT NOW()');
-    
     // Get authenticated active users
     const authenticatedUsers = await pool.query(
       `SELECT 
@@ -680,7 +677,7 @@ app.get('/api/active-users', ensureRole('admin'), async (req, res) => {
         u.role, 
         u.email, 
         au.last_seen,
-        au.current_page
+        COALESCE(au.current_page, 'browsing') as current_page
        FROM users u
        INNER JOIN active_users au ON u.id = au.user_id
        WHERE au.last_seen > NOW() - INTERVAL '5 minutes'
@@ -688,11 +685,11 @@ app.get('/api/active-users', ensureRole('admin'), async (req, res) => {
     );
     console.log('Authenticated users found:', authenticatedUsers.rows.length);
     
-    // Get anonymous users
+    // Get anonymous users with better error handling
     const anonymousStats = await pool.query(
       `SELECT 
         COUNT(*) as count,
-        array_agg(DISTINCT current_page) as current_pages
+        array_remove(array_agg(DISTINCT current_page), NULL) as current_pages
        FROM anonymous_sessions
        WHERE last_seen > NOW() - INTERVAL '5 minutes'`
     );
@@ -701,10 +698,10 @@ app.get('/api/active-users', ensureRole('admin'), async (req, res) => {
     const response = {
       authenticated: authenticatedUsers.rows,
       anonymous: {
-        count: parseInt(anonymousStats.rows[0].count),
+        count: parseInt(anonymousStats.rows[0].count) || 0,
         currentPages: anonymousStats.rows[0].current_pages || []
       },
-      totalActive: authenticatedUsers.rows.length + parseInt(anonymousStats.rows[0].count)
+      totalActive: authenticatedUsers.rows.length + (parseInt(anonymousStats.rows[0].count) || 0)
     };
 
     console.log('Sending response:', response);
