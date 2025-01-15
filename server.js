@@ -631,18 +631,19 @@ app.get('/api/auth/current-user', (req, res) => {
 // Track active users
 app.post('/api/auth/heartbeat', ensureAuthenticated, async (req, res) => {
   try {
-    // Update active users
+    const { currentPage } = req.body;
+    
     await pool.query(
-      `INSERT INTO active_users (session_id, user_id, username, last_seen) 
-       VALUES ($1, $2, $3, NOW()) 
+      `INSERT INTO active_users (session_id, user_id, username, last_seen, current_page) 
+       VALUES ($1, $2, $3, NOW(), $4) 
        ON CONFLICT (user_id) 
        DO UPDATE SET 
          last_seen = NOW(),
-         session_id = $1`,
-      [req.sessionID, req.user.id, req.user.username]
+         session_id = $1,
+         current_page = $4`,
+      [req.sessionID, req.user.id, req.user.username, currentPage]
     );
 
-    // Update total time spent
     await pool.query(
       `UPDATE users 
        SET total_time_spent = COALESCE(total_time_spent, 0) + 30

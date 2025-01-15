@@ -81,19 +81,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (user) {
       const heartbeat = setInterval(() => {
-        axios.post('/api/auth/heartbeat')
+        const currentPage = window.location.pathname;
+        axios.post('/api/auth/heartbeat', { currentPage })
           .catch(error => {
-            console.error('Heartbeat failed', {
-              timestamp: new Date().toISOString(),
-              component: 'AuthProvider',
-              action: 'heartbeat',
-              error: {
-                type: error instanceof Error ? error.constructor.name : typeof error,
-                message: error instanceof Error ? error.message : 'Unknown error'
-              }
-            });
+            console.error('Heartbeat failed:', error);
           });
-      }, 60000);
+      }, 30000);
 
       return () => clearInterval(heartbeat);
     }

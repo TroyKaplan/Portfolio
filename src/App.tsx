@@ -17,7 +17,6 @@ import Register from './components/Register';
 import UserProfile from './pages/UserProfile';
 import UserDetails from './pages/UserDetails';
 import ErrorBoundary from './components/ErrorBoundary';
-import ActivityTracker from './components/ActivityTracker';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
@@ -26,7 +25,6 @@ function App() {
             <ThemeProvider>
                 <Router>
                     <div className="app-container">
-                        <ActivityTracker />
                         <Navbar />
                         <div className="content-wrapper">
                             <Routes>
