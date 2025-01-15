@@ -1027,33 +1027,50 @@ app.get('/api/health/db', async (req, res) => {
 // Run every minute
 cron.schedule('* * * * *', async () => {
   try {
-    // Get current active users count
+    console.log('[Analytics] Starting collection...');
+    
     const activeStats = await pool.query(`
+      WITH current_counts AS (
+        SELECT 
+          COUNT(DISTINCT au.user_id) as authenticated_users,
+          (
+            SELECT COUNT(DISTINCT session_id) 
+            FROM anonymous_sessions 
+            WHERE last_seen > NOW() - INTERVAL '5 minutes'
+          ) as anonymous_users
+        FROM active_users au 
+        WHERE au.last_seen > NOW() - INTERVAL '5 minutes'
+      )
       SELECT 
-        COUNT(DISTINCT au.user_id) as authenticated_users,
-        (
-          SELECT COUNT(DISTINCT session_id) 
-          FROM anonymous_sessions 
-          WHERE last_seen > NOW() - INTERVAL '5 minutes'
-        ) as anonymous_users
-      FROM active_users au 
-      WHERE au.last_seen > NOW() - INTERVAL '5 minutes'
+        authenticated_users,
+        anonymous_users,
+        (authenticated_users + anonymous_users) as total_users
+      FROM current_counts
     `);
 
-    // Store the statistics
+    const stats = activeStats.rows[0];
+    console.log('[Analytics] Current counts:', {
+      authenticated: stats.authenticated_users || 0,
+      anonymous: stats.anonymous_users || 0,
+      total: stats.total_users || 0
+    });
+
     await pool.query(`
-      INSERT INTO visitor_analytics
-        (timestamp, total_users, authenticated_users, anonymous_users)
+      INSERT INTO visitor_analytics 
+        (timestamp, total_users, authenticated_users, anonymous_users, peak_concurrent_users)
       VALUES 
-        (NOW(), $1, $2, $3)`,
+        (NOW(), $1, $2, $3, $4)`,
       [
-        activeStats.rows[0].authenticated_users + activeStats.rows[0].anonymous_users,
-        activeStats.rows[0].authenticated_users,
-        activeStats.rows[0].anonymous_users
+        stats.total_users || 0,
+        stats.authenticated_users || 0,
+        stats.anonymous_users || 0,
+        stats.total_users || 0
       ]
     );
+    
+    console.log('[Analytics] Data stored successfully');
   } catch (error) {
-    console.error('Error collecting visitor analytics:', error);
+    console.error('[Analytics] Error:', error);
   }
 });
 
