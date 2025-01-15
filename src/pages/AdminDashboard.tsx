@@ -9,26 +9,18 @@ import { useAuth } from '../hooks/useAuth';
 import { formatTimeSpent } from '../utils/timeFormatters';
 
 interface VisitorStats {
-  current: {
-    total_anonymous: number;
-    active_anonymous: number;
-    total_page_views: number;
+  summary: {
+    averageTotal: number;
+    averageAuthenticated: number;
+    averageAnonymous: number;
+    peakConcurrent: number;
   };
-  historical: Array<{
+  dailyStats: Array<{
     date: string;
-    anonymous_visitors: number;
-    registered_visitors: number;
-    total_page_views: number;
-    peak_concurrent_users: number;
-    average_session_duration: string;
-  }>;
-  aggregates: Array<{
-    period: string;
-    total_anonymous: number;
-    total_registered: number;
-    total_views: number;
-    peak_users: number;
-    avg_duration: number;
+    total_users: number;
+    authenticated_users: number;
+    anonymous_users: number;
+    peak_concurrent: number;
   }>;
 }
 
@@ -90,11 +82,15 @@ const AdminDashboard: React.FC = () => {
 
   const fetchVisitorStats = async () => {
     try {
-      const response = await axios.get(apiEndpoints.visitorStats);
+      const response = await userService.getVisitorStats();
       setVisitorStats(response.data);
     } catch (error) {
-      console.error('Error fetching visitor stats:', error);
-      setVisitorStats(null);
+      const err = error as any;
+      console.error('Error fetching visitor stats:', {
+        message: err?.response?.data?.message || err?.message || 'Unknown error',
+        status: err?.response?.status || 500,
+        details: err?.response?.data || err
+      });
     }
   };
 
@@ -222,69 +218,44 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="visitor-stats">
-        <h2>Visitor Statistics</h2>
-        
-        {/* Current Stats */}
-        <div className="current-stats">
-          <h3>Current Activity</h3>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-value">{visitorStats?.current?.active_anonymous || 0}</div>
-              <div className="stat-label">Active Anonymous Users</div>
+      {visitorStats && (
+        <div className="visitor-stats">
+          <h3>30-Day Statistics</h3>
+          <div className="summary">
+            <div>
+              <h4>Average Daily Users</h4>
+              <p>Total: {visitorStats.summary.averageTotal}</p>
+              <p>Authenticated: {visitorStats.summary.averageAuthenticated}</p>
+              <p>Anonymous: {visitorStats.summary.averageAnonymous}</p>
             </div>
-            <div className="stat-card">
-              <div className="stat-value">{visitorStats?.current?.total_anonymous || 0}</div>
-              <div className="stat-label">Total Anonymous Sessions</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{activeCount}</div>
-              <div className="stat-label">Active Registered Users</div>
+            <div>
+              <h4>Peak Concurrent Users</h4>
+              <p>{visitorStats.summary.peakConcurrent}</p>
             </div>
           </div>
-        </div>
-
-        {/* Aggregate Stats */}
-        <div className="aggregate-stats">
-          <h3>Summary</h3>
-          {visitorStats?.aggregates?.map(stat => (
-            <div key={stat.period} className="period-stats">
-              <h4>{stat.period.charAt(0).toUpperCase() + stat.period.slice(1)}</h4>
-              <p>Anonymous Users: {stat.total_anonymous}</p>
-              <p>Registered Users: {stat.total_registered}</p>
-              <p>Peak Concurrent: {stat.peak_users}</p>
-              <p>Avg Session: {Math.round(stat.avg_duration / 60)} minutes</p>
-            </div>
-          )) || <p>No aggregate data available</p>}
-        </div>
-
-        {/* Historical Data */}
-        <div className="historical-stats">
-          <h3>Historical Data</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Anonymous</th>
-                <th>Registered</th>
-                <th>Peak Users</th>
-                <th>Avg Session</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visitorStats?.historical?.map(day => (
-                <tr key={day.date}>
-                  <td>{new Date(day.date).toLocaleDateString()}</td>
-                  <td>{day.anonymous_visitors}</td>
-                  <td>{day.registered_visitors}</td>
-                  <td>{day.peak_concurrent_users}</td>
-                  <td>{formatTime(parseInt(day.average_session_duration))}</td>
+          <div className="historical-data">
+            <h4>Daily Breakdown</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Average Users</th>
+                  <th>Peak Users</th>
                 </tr>
-              )) || <tr><td colSpan={5}>No historical data available</td></tr>}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {visitorStats.dailyStats.map(day => (
+                  <tr key={day.date}>
+                    <td>{new Date(day.date).toLocaleDateString()}</td>
+                    <td>{day.total_users}</td>
+                    <td>{day.peak_concurrent}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       <table className="user-table">
         <thead>

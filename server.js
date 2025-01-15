@@ -14,6 +14,7 @@ const pgSession = require('connect-pg-simple')(session);
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const http = require('http');
 const { validateEmail } = require('./src/middlewares/validateEmail');
+const cron = require('node-cron');
 
 // Initialize express app
 const app = express();
@@ -832,60 +833,52 @@ app.use('/api', apiRouter);
 // Add this before the catch-all route
 app.get('/api/visitor-stats', ensureRole('admin'), async (req, res) => {
   try {
-    // Get current active sessions
-    const currentStats = await pool.query(`
+    // Get 30-day summary with daily averages
+    const monthlyStats = await pool.query(`
+      WITH daily_stats AS (
+        SELECT 
+          date,
+          ROUND(AVG(total_users)) as avg_total_users,
+          ROUND(AVG(authenticated_users)) as avg_auth_users,
+          ROUND(AVG(anonymous_users)) as avg_anon_users,
+          MAX(total_users) as peak_users
+        FROM visitor_analytics
+        WHERE timestamp > NOW() - INTERVAL '30 days'
+        GROUP BY date
+      )
       SELECT 
-        COUNT(DISTINCT session_id) as total_anonymous,
-        COUNT(DISTINCT CASE WHEN last_seen > NOW() - INTERVAL '10 minutes' 
-              THEN session_id END) as active_anonymous,
-        SUM(page_views) as total_page_views
-      FROM anonymous_sessions
-      WHERE last_seen > NOW() - INTERVAL '24 hours'
-    `);
-
-    // Get historical stats
-    const historicalStats = await pool.query(`
-      SELECT 
-        date,
-        anonymous_visitors,
-        registered_visitors,
-        total_page_views,
-        peak_concurrent_users,
-        average_session_duration
-      FROM visitor_analytics
-      WHERE date > CURRENT_DATE - INTERVAL '30 days'
+        date::TEXT,
+        avg_total_users as total_users,
+        avg_auth_users as authenticated_users,
+        avg_anon_users as anonymous_users,
+        peak_users as peak_concurrent
+      FROM daily_stats
       ORDER BY date DESC
     `);
 
-    // Calculate weekly and monthly aggregates
-    const aggregateStats = await pool.query(`
+    // Calculate overall averages
+    const averages = await pool.query(`
       SELECT 
-        CASE 
-          WHEN date > CURRENT_DATE - INTERVAL '7 days' THEN 'weekly'
-          ELSE 'monthly'
-        END as period,
-        SUM(anonymous_visitors) as total_anonymous,
-        SUM(registered_visitors) as total_registered,
-        SUM(total_page_views) as total_views,
-        MAX(peak_concurrent_users) as peak_users,
-        AVG(EXTRACT(EPOCH FROM average_session_duration))::INTEGER as avg_duration
+        ROUND(AVG(total_users)) as avg_total_users,
+        ROUND(AVG(authenticated_users)) as avg_auth_users,
+        ROUND(AVG(anonymous_users)) as avg_anon_users,
+        MAX(total_users) as peak_users
       FROM visitor_analytics
-      WHERE date > CURRENT_DATE - INTERVAL '30 days'
-      GROUP BY 
-        CASE 
-          WHEN date > CURRENT_DATE - INTERVAL '7 days' THEN 'weekly'
-          ELSE 'monthly'
-        END
+      WHERE timestamp > NOW() - INTERVAL '30 days'
     `);
 
     res.json({
-      current: currentStats.rows[0],
-      historical: historicalStats.rows,
-      aggregates: aggregateStats.rows
+      summary: {
+        averageTotal: averages.rows[0].avg_total_users || 0,
+        averageAuthenticated: averages.rows[0].avg_auth_users || 0,
+        averageAnonymous: averages.rows[0].avg_anon_users || 0,
+        peakConcurrent: averages.rows[0].peak_users || 0
+      },
+      dailyStats: monthlyStats.rows
     });
   } catch (error) {
-    console.error('Error fetching visitor stats:', error);
-    res.status(500).json({ message: 'Error fetching visitor stats' });
+    console.error('Error fetching visitor statistics:', error);
+    res.status(500).json({ message: 'Error fetching statistics' });
   }
 });
 
@@ -1027,5 +1020,39 @@ app.get('/api/health/db', async (req, res) => {
       message: 'Database connection failed',
       error: error.message 
     });
+  }
+});
+
+// Add this after your route definitions
+// Run every minute
+cron.schedule('* * * * *', async () => {
+  try {
+    // Get current active users count
+    const activeStats = await pool.query(`
+      SELECT 
+        COUNT(DISTINCT au.user_id) as authenticated_users,
+        (
+          SELECT COUNT(DISTINCT session_id) 
+          FROM anonymous_sessions 
+          WHERE last_seen > NOW() - INTERVAL '5 minutes'
+        ) as anonymous_users
+      FROM active_users au 
+      WHERE au.last_seen > NOW() - INTERVAL '5 minutes'
+    `);
+
+    // Store the statistics
+    await pool.query(`
+      INSERT INTO visitor_analytics
+        (timestamp, total_users, authenticated_users, anonymous_users)
+      VALUES 
+        (NOW(), $1, $2, $3)`,
+      [
+        activeStats.rows[0].authenticated_users + activeStats.rows[0].anonymous_users,
+        activeStats.rows[0].authenticated_users,
+        activeStats.rows[0].anonymous_users
+      ]
+    );
+  } catch (error) {
+    console.error('Error collecting visitor analytics:', error);
   }
 });
