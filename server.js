@@ -836,6 +836,14 @@ app.get('/api/visitor-stats', ensureRole('admin'), async (req, res) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    // Debug query is fine here because we're inside an async function
+    const debugCount = await pool.query(`
+      SELECT game_id, COUNT(*) 
+      FROM game_analytics 
+      GROUP BY game_id
+    `);
+    console.log('Debug - Game click counts:', debugCount.rows);
+
     const stats = await pool.query(`
       WITH daily_metrics AS (
         SELECT 
@@ -903,7 +911,7 @@ app.get('/api/visitor-stats', ensureRole('admin'), async (req, res) => {
       ) as stats;
     `, [thirtyDaysAgo.toISOString()]);
 
-    console.log('Stats query result:', stats.rows[0]); // Debug log
+    console.log('Stats query result:', stats.rows[0]);
     res.json(stats.rows[0].stats);
   } catch (error) {
     console.error('Error fetching visitor statistics:', error);
@@ -1152,11 +1160,3 @@ app.post('/api/track-game-click', async (req, res) => {
     res.status(500).json({ message: 'Error tracking game click' });
   }
 });
-
-// Add this before the main stats query
-const debugCount = await pool.query(`
-  SELECT game_id, COUNT(*) 
-  FROM game_analytics 
-  GROUP BY game_id
-`);
-console.log('Debug - Game click counts:', debugCount.rows);
