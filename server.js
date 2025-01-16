@@ -874,9 +874,15 @@ app.get('/api/visitor-stats', ensureRole('admin'), async (req, res) => {
           FROM daily_metrics
         ),
         'dailyStats', (
-          SELECT json_agg(row_to_json(daily_metrics))
+          SELECT json_agg(json_build_object(
+            'date', date,
+            'total_users', avg_total_users,
+            'authenticated_users', avg_auth_users,
+            'anonymous_users', avg_anon_users,
+            'peak_concurrent', peak_concurrent,
+            'new_users', new_users
+          ) ORDER BY date DESC)
           FROM daily_metrics
-          ORDER BY date DESC
         ),
         'gameStats', (
           SELECT COALESCE(
