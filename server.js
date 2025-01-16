@@ -851,43 +851,51 @@ app.get('/api/visitor-stats', ensureRole('admin'), async (req, res) => {
         WHERE va.date >= $1
         GROUP BY va.date, dus.new_users_count, dus.total_users_count
       ),
-      summary_metrics AS (
+      game_metrics AS (
         SELECT 
-          ROUND(AVG(avg_total_users)) as average_total,
-          ROUND(AVG(avg_auth_users)) as average_authenticated,
-          ROUND(AVG(avg_anon_users)) as average_anonymous,
-          MAX(peak_concurrent) as peak_concurrent,
-          SUM(new_users) as total_new_users,
-          MAX(total_users) as total_users
-        FROM daily_metrics
+          game_id,
+          COUNT(*) as total_clicks,
+          COUNT(CASE WHEN NOT is_anonymous THEN 1 END) as authenticated_clicks,
+          COUNT(CASE WHEN is_anonymous THEN 1 END) as anonymous_clicks
+        FROM game_analytics
+        WHERE clicked_at >= $1
+        GROUP BY game_id
       )
-      SELECT 
-        json_build_object(
-          'summary', json_build_object(
-            'averageTotal', average_total,
-            'averageAuthenticated', average_authenticated,
-            'averageAnonymous', average_anonymous,
-            'peakConcurrent', peak_concurrent,
-            'newUsers', total_new_users,
-            'totalUsers', total_users
-          ),
-          'dailyStats', (
-            SELECT json_agg(
-              json_build_object(
-                'date', date,
-                'total_users', avg_total_users,
-                'authenticated_users', avg_auth_users,
-                'anonymous_users', avg_anon_users,
-                'peak_concurrent', peak_concurrent,
-                'new_users', new_users
-              ) ORDER BY date DESC
-            )
-            FROM daily_metrics
+      SELECT json_build_object(
+        'summary', (
+          SELECT json_build_object(
+            'averageTotal', ROUND(AVG(avg_total_users)),
+            'averageAuthenticated', ROUND(AVG(avg_auth_users)),
+            'averageAnonymous', ROUND(AVG(avg_anon_users)),
+            'peakConcurrent', MAX(peak_concurrent),
+            'newUsers', SUM(new_users),
+            'totalUsers', MAX(total_users)
           )
-        ) as stats
-      FROM summary_metrics;
+          FROM daily_metrics
+        ),
+        'dailyStats', (
+          SELECT json_agg(row_to_json(daily_metrics))
+          FROM daily_metrics
+          ORDER BY date DESC
+        ),
+        'gameStats', (
+          SELECT COALESCE(
+            json_object_agg(
+              game_id,
+              json_build_object(
+                'totalClicks', total_clicks,
+                'authenticatedClicks', authenticated_clicks,
+                'anonymousClicks', anonymous_clicks
+              )
+            ),
+            '{}'::json
+          )
+          FROM game_metrics
+        )
+      ) as stats;
     `, [thirtyDaysAgo.toISOString()]);
 
+    console.log('Stats query result:', stats.rows[0]); // Debug log
     res.json(stats.rows[0].stats);
   } catch (error) {
     console.error('Error fetching visitor statistics:', error);
