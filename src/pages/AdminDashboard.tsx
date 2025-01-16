@@ -111,14 +111,10 @@ const AdminDashboard: React.FC = () => {
   const fetchVisitorStats = async () => {
     try {
       const response = await userService.getVisitorStats();
+      console.log('Visitor stats response:', response.data);
       setVisitorStats(response.data);
     } catch (error) {
-      const err = error as any;
-      console.error('Error fetching visitor stats:', {
-        message: err?.response?.data?.message || err?.message || 'Unknown error',
-        status: err?.response?.status || 500,
-        details: err?.response?.data || err
-      });
+      console.error('Error fetching stats:', error);
     }
   };
 
@@ -321,9 +317,11 @@ const AdminDashboard: React.FC = () => {
       {visitorStats?.gameStats && (
         <div className="game-analytics">
           <h2 className="stats-header">Game Click Analytics</h2>
+          <>{console.log('Rendering game stats:', visitorStats.gameStats)}</>
           <div className="game-stats-grid">
             {Object.entries(visitorStats.gameStats).map(([gameId, stats]: [string, GameStats]) => {
               const game = allGames.find(g => g.id === gameId);
+              console.log('Rendering game:', gameId, stats);
               return (
                 <div key={gameId} className="game-stat-card">
                   <div className="game-stat-header">

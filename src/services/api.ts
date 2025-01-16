@@ -10,7 +10,7 @@ const api = axios.create({
 
 export const trackGameClick = async (gameId: string) => {
   try {
-    await axios.post('/api/track-game-click', { gameId });
+    await api.post('/api/track-game-click', { gameId });
   } catch (error) {
     console.error('Failed to track game click:', error);
   }

@@ -1114,11 +1114,15 @@ app.delete('/api/users/:userId', ensureRole('admin'), async (req, res) => {
   }
 });
 
+// This endpoint receives the tracking data from api.ts trackGameClick function
 app.post('/api/track-game-click', async (req, res) => {
   try {
     const { gameId } = req.body;
     const userId = req.user?.id;
     const sessionId = req.cookies.sessionId;
+
+    // Let's add a console.log to verify data is being received
+    console.log('Tracking game click:', { gameId, userId, sessionId });
 
     await pool.query(`
       INSERT INTO game_analytics 
