@@ -15,7 +15,7 @@
     "@types/pg": "^8.11.10",
     "@types/react": "^18.3.9",
     "@types/react-dom": "^18.3.0",
-    "axios": "^1.7.7",
+    "axios": "^1.7.9",
     "bcryptjs": "^2.4.3",
     "concurrently": "^8.2.2",
     "connect-pg-simple": "^10.0.0",
@@ -70,6 +70,7 @@
     ]
   },
   "devDependencies": {
+    "@types/axios": "^0.14.4",
     "@types/react-syntax-highlighter": "^15.5.13",
     "concurrently": "^8.2.2",
     "nodemon": "^3.0.3"

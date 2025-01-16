@@ -61,12 +61,14 @@ const GamesPage: React.FC = () => {
                                 {gamesData.multiplayerGames.map((game: Game) => (
                                     <GameCard
                                         key={game.id}
+                                        id={game.id}
                                         title={game.title}
                                         description={game.description}
                                         thumbnail={game.thumbnail}
                                         onClick={() => handleGameClick(game.id)}
                                         isMultiplayer={game.isMultiplayer}
                                         serverType={game.serverType}
+                                        access={game.access}
                                     />
                                 ))}
                             </div>
@@ -81,11 +83,13 @@ const GamesPage: React.FC = () => {
                                 {gamesData.gameMakerGames.map((game: Game) => (
                                     <GameCard
                                         key={game.id}
+                                        id={game.id}
                                         title={game.title}
                                         description={game.description}
                                         thumbnail={game.thumbnail}
                                         onClick={() => handleGameClick(game.id)}
                                         access={game.access}
+                                        isMultiplayer={game.isMultiplayer}
                                     />
                                 ))}
                             </div>
@@ -100,11 +104,13 @@ const GamesPage: React.FC = () => {
                                 {gamesData.godotGames.map((game: Game) => (
                                     <GameCard
                                         key={game.id}
+                                        id={game.id}
                                         title={game.title}
                                         description={game.description}
                                         thumbnail={game.thumbnail}
                                         onClick={() => handleGameClick(game.id)}
                                         access={game.access}
+                                        isMultiplayer={game.isMultiplayer}
                                     />
                                 ))}
                             </div>

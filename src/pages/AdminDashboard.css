@@ -197,4 +197,35 @@
   min-height: 100vh;
   font-size: 1.2rem;
   color: #666;
+}
+
+.game-analytics {
+  margin-top: var(--spacing-xl);
+  background: var(--background-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+}
+
+.game-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+}
+
+.game-stat-card {
+  background: var(--background-primary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm);
+  background: var(--background-secondary);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-xs);
 } 

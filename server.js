@@ -1113,3 +1113,22 @@ app.delete('/api/users/:userId', ensureRole('admin'), async (req, res) => {
     res.status(500).json({ message: 'Error deleting user' });
   }
 });
+
+app.post('/api/track-game-click', async (req, res) => {
+  try {
+    const { gameId } = req.body;
+    const userId = req.user?.id;
+    const sessionId = req.cookies.sessionId;
+
+    await pool.query(`
+      INSERT INTO game_analytics 
+        (game_id, user_id, is_anonymous, session_id)
+      VALUES ($1, $2, $3, $4)
+    `, [gameId, userId, !userId, sessionId]);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error tracking game click:', error);
+    res.status(500).json({ message: 'Error tracking game click' });
+  }
+});

@@ -8,6 +8,14 @@ const api = axios.create({
   }
 });
 
+export const trackGameClick = async (gameId: string) => {
+  try {
+    await axios.post('/api/track-game-click', { gameId });
+  } catch (error) {
+    console.error('Failed to track game click:', error);
+  }
+};
+
 export const userService = {
   getCurrentUser: () => api.get('/api/auth/current-user'),
   getActiveUsers: () => api.get('/api/active-users'),

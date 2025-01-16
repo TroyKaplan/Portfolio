@@ -7,7 +7,29 @@ import { apiEndpoints } from '../config/api';
 import { userService } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { formatTimeSpent } from '../utils/timeFormatters';
+import gamesData, { Game } from '../data/games';
 
+// Combine all games into one array
+const allGames: Game[] = [
+  ...gamesData.gameMakerGames,
+  ...gamesData.godotGames,
+  ...gamesData.multiplayerGames
+];
+
+// Add interface for game stats
+interface GameStats {
+  totalClicks: number;
+  authenticatedClicks: number;
+  anonymousClicks: number;
+  dailyClicks: Array<{
+    date: string;
+    total: number;
+    authenticated: number;
+    anonymous: number;
+  }>;
+}
+
+// Update VisitorStats interface to include gameStats
 interface VisitorStats {
   summary: {
     averageTotal: number;
@@ -25,6 +47,9 @@ interface VisitorStats {
     peak_concurrent: number;
     new_users: number;
   }>;
+  gameStats: {
+    [gameId: string]: GameStats;
+  };
 }
 
 const AdminDashboard: React.FC = () => {
@@ -289,6 +314,38 @@ const AdminDashboard: React.FC = () => {
                 </table>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {visitorStats?.gameStats && (
+        <div className="game-analytics">
+          <h2 className="stats-header">Game Click Analytics</h2>
+          <div className="game-stats-grid">
+            {Object.entries(visitorStats.gameStats).map(([gameId, stats]: [string, GameStats]) => {
+              const game = allGames.find(g => g.id === gameId);
+              return (
+                <div key={gameId} className="game-stat-card">
+                  <div className="game-stat-header">
+                    <h3>{game?.title || gameId}</h3>
+                  </div>
+                  <div className="stat-details">
+                    <div className="stat-row">
+                      <span>Total Clicks</span>
+                      <span className="stat-value">{stats.totalClicks}</span>
+                    </div>
+                    <div className="stat-row">
+                      <span>Registered Users</span>
+                      <span className="stat-value">{stats.authenticatedClicks}</span>
+                    </div>
+                    <div className="stat-row">
+                      <span>Anonymous Users</span>
+                      <span className="stat-value">{stats.anonymousClicks}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

@@ -4,8 +4,10 @@ import ServerStatus from './ServerStatus';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { FaLock, FaPlay, FaTimes } from 'react-icons/fa';
+import { trackGameClick } from '../services/api';
 
 interface GameCardProps {
+    id: string;
     title: string;
     description: string;
     thumbnail: string;
@@ -16,6 +18,7 @@ interface GameCardProps {
 }
 
 const GameCard: React.FC<GameCardProps> = ({ 
+    id, 
     title, 
     description, 
     thumbnail, 
@@ -32,16 +35,21 @@ const GameCard: React.FC<GameCardProps> = ({
         (user && isMultiplayer) ||
         (user && access === 'subscriber' && (user.role === 'subscriber' || user.role === 'admin'));
 
-    const handleClick = (e: React.MouseEvent) => {
+    const handleClick = async (e: React.MouseEvent) => {
         e.preventDefault();
-        if (!canPlay) {
+        if (canPlay) {
+            try {
+                await trackGameClick(id);
+            } catch (error) {
+                console.error('Failed to track game click:', error);
+            }
+            onClick();
+        } else {
             if (access === 'subscriber') {
                 navigate(user ? '/subscribe' : '/login?redirect=/subscribe');
             } else {
                 navigate('/login');
             }
-        } else {
-            onClick();
         }
     };
 
