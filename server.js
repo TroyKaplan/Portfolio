@@ -1143,20 +1143,50 @@ app.post('/api/track-game-click', async (req, res) => {
   try {
     const { gameId } = req.body;
     const userId = req.user?.id;
-    const sessionId = req.cookies.sessionId;
+    const sessionId = req.cookies?.sessionId || null; // Make sessionId optional
 
-    console.log('Tracking game click:', { gameId, userId, sessionId });
+    // Add validation
+    if (!gameId) {
+      console.error('Missing gameId in request');
+      return res.status(400).json({ message: 'gameId is required' });
+    }
 
+    console.log('Tracking game click:', {
+      gameId,
+      userId,
+      sessionId,
+      body: req.body,
+      cookies: req.cookies
+    });
+
+    // Use parameterized query with explicit null handling
     await pool.query(`
       INSERT INTO game_analytics 
         (game_id, user_id, is_anonymous, session_id)
-      VALUES ($1, $2, $3, $4)
-    `, [gameId, userId, !userId, sessionId]);
+      VALUES 
+        ($1, NULLIF($2, 0), $3, $4)
+    `, [
+      gameId,
+      userId || 0,  // Convert undefined/null to 0 for NULLIF
+      !userId,
+      sessionId
+    ]);
 
     console.log('Successfully tracked game click');
     res.json({ success: true });
   } catch (error) {
-    console.error('Error tracking game click:', error);
-    res.status(500).json({ message: 'Error tracking game click' });
+    // Detailed error logging
+    console.error('Error tracking game click:', {
+      error: error.message,
+      stack: error.stack,
+      details: error.detail,
+      code: error.code
+    });
+    
+    res.status(500).json({ 
+      message: 'Error tracking game click',
+      details: error.message,
+      code: error.code
+    });
   }
 });
