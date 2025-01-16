@@ -163,4 +163,33 @@
   .stat-item {
     font-size: 0.9rem;
   }
+  .danger-zone {
+    margin-top: 2rem;
+    padding: 1rem;
+    border: 1px solid #ff4444;
+    border-radius: 4px;
+  }
+  
+  .delete-button {
+    background-color: #ff4444;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .delete-button:hover {
+    background-color: #cc0000;
+  }
+  
+  .delete-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  
+  .error-message {
+    color: #ff4444;
+    margin-top: 0.5rem;
+  }
 }
