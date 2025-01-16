@@ -39,6 +39,7 @@ const GameCard: React.FC<GameCardProps> = ({
         e.preventDefault();
         if (canPlay) {
             try {
+                console.log('Tracking click for game:', id);
                 await trackGameClick(id);
             } catch (error) {
                 console.error('Failed to track game click:', error);

@@ -874,14 +874,16 @@ app.get('/api/visitor-stats', ensureRole('admin'), async (req, res) => {
           FROM daily_metrics
         ),
         'dailyStats', (
-          SELECT json_agg(json_build_object(
-            'date', date,
-            'total_users', avg_total_users,
-            'authenticated_users', avg_auth_users,
-            'anonymous_users', avg_anon_users,
-            'peak_concurrent', peak_concurrent,
-            'new_users', new_users
-          ) ORDER BY date DESC)
+          SELECT json_agg(
+            json_build_object(
+              'date', date,
+              'total_users', avg_total_users,
+              'authenticated_users', avg_auth_users,
+              'anonymous_users', avg_anon_users,
+              'peak_concurrent', peak_concurrent,
+              'new_users', new_users
+            ) ORDER BY date DESC
+          )
           FROM daily_metrics
         ),
         'gameStats', (
@@ -1135,7 +1137,6 @@ app.post('/api/track-game-click', async (req, res) => {
     const userId = req.user?.id;
     const sessionId = req.cookies.sessionId;
 
-    // Let's add a console.log to verify data is being received
     console.log('Tracking game click:', { gameId, userId, sessionId });
 
     await pool.query(`
@@ -1144,9 +1145,18 @@ app.post('/api/track-game-click', async (req, res) => {
       VALUES ($1, $2, $3, $4)
     `, [gameId, userId, !userId, sessionId]);
 
+    console.log('Successfully tracked game click');
     res.json({ success: true });
   } catch (error) {
     console.error('Error tracking game click:', error);
     res.status(500).json({ message: 'Error tracking game click' });
   }
 });
+
+// Add this before the main stats query
+const debugCount = await pool.query(`
+  SELECT game_id, COUNT(*) 
+  FROM game_analytics 
+  GROUP BY game_id
+`);
+console.log('Debug - Game click counts:', debugCount.rows);
