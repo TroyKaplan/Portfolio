@@ -32,16 +32,6 @@
     background-color: var(--hover-color);
 }
 
-.theme-toggle-button {
-    background: none;
-    border: none;
-    padding: var(--spacing-sm);
-    font-size: 1.2rem;
-    cursor: pointer;
-    color: var(--text-primary);
-    transition: transform var(--transition-fast);
-}
-
 .theme-toggle-button:hover {
     transform: scale(1.1);
 }

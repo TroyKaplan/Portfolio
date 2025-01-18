@@ -3,10 +3,7 @@ import axios from 'axios';
 import type { User, ActiveUser } from '../types/user';
 import { useNavigate } from 'react-router-dom';
 import './AdminDashboard.css';
-import { apiEndpoints } from '../config/api';
 import { userService } from '../services/api';
-import { useAuth } from '../hooks/useAuth';
-import { formatTimeSpent } from '../utils/timeFormatters';
 import gamesData, { Game } from '../data/games';
 
 // Combine all games into one array

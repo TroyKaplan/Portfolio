@@ -22,7 +22,7 @@ const multiplayerGames: Game[] = [
         instructions: 'Click.',
         isMultiplayer: true,
         serverType: 'wolfscape',
-        access: 'public',
+        access: 'public', // even though this is public, it is only available to users wtih accounts. we want this behavior for this specific game, but if it's public it should be availaable to everyone
     },
     {
         id: 'RocketGame',
@@ -33,7 +33,7 @@ const multiplayerGames: Game[] = [
         instructions: 'Use A and D keys to rotate. Press W to fly',
         isMultiplayer: true,
         serverType: 'rocketGame',
-        access: 'subscriber',
+        access: 'public', // when set to subscriber the game will still be available for registered users
     }
 ];
 const gameMakerGames: Game[] = [

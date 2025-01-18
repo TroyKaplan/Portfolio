@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { StripeStatus, statusMap } from '../types/subscription';
 
 interface SubscriptionStatus {
   status: string;

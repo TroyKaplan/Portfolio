@@ -8,14 +8,14 @@
   --pure-white: #ffffff;
   --neon-blue: #00b3ff;
   
-  /* Theme Colors - Light */
-  --background-color: var(--off-white);
-  --card-background: var(--pure-white);
-  --text-primary: #1a1f3c;
-  --text-secondary: #4a5568;
-  --border-color: #e2e8f0;
-  --hover-color: rgba(0, 122, 255, 0.1);
-  --heading-color: var(--midnight-blue);
+  /* Theme Colors - Dark Only */
+  --background-color: var(--pure-black);
+  --card-background: #111111;
+  --text-primary: var(--pure-white);
+  --text-secondary: #90caf9;
+  --border-color: #333333;
+  --hover-color: rgba(0, 179, 255, 0.1);
+  --heading-color: var(--neon-blue);
   
   /* Functional Colors */
   --success: #10B981;
@@ -37,17 +37,6 @@
   /* Transitions */
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
-}
-
-/* Dark Theme Override */
-[data-theme='dark'] {
-  --background-color: var(--pure-black);
-  --card-background: #111111;
-  --text-primary: var(--pure-white);
-  --text-secondary: #90caf9;
-  --border-color: #333333;
-  --hover-color: rgba(0, 179, 255, 0.1);
-  --heading-color: var(--neon-blue);
 }
 
 /* Global Styles */

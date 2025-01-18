@@ -47,17 +47,19 @@ const GalleryViewer: React.FC<GalleryViewerProps> = ({ item, onClose }) => {
             case 'video':
                 if (isEmbedVideo(media.source)) {
                     return (
-                        <iframe
-                            key={media.source}
-                            src={media.source}
-                            title={item.title}
-                            frameBorder="0"
-                            allowFullScreen
-                        ></iframe>
+                        <div className="media-content youtube-container">
+                            <iframe
+                                src={media.source}
+                                title="YouTube video player"
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                            />
+                        </div>
                     );
                 } else {
                     return (
-                        <video key={media.source} controls width="100%" height="auto">
+                        <video key={media.source} controls width="100%" height="100%">
                             <source src={media.source} type="video/mp4" />
                             Your browser does not support the video tag.
                         </video>
@@ -72,30 +74,6 @@ const GalleryViewer: React.FC<GalleryViewerProps> = ({ item, onClose }) => {
                 );
             default:
                 return null;
-        }
-    };
-
-    const getOptimizedImageSource = (source: string, deviceClass: string) => {
-        // If the image is from a CDN or service that supports dynamic resizing
-        if (source.includes('imagecdn.com')) {
-            return source;
-        }
-        
-        // For local images, we'll need to handle different sizes
-        const basePath = source.split('?')[0];
-        
-        switch (deviceClass) {
-            case 'high-res':
-                return `${basePath}?quality=90&w=1920`;
-            case 'standard':
-                return `${basePath}?quality=85&w=1200`;
-            case 'tablet':
-                return `${basePath}?quality=80&w=900`;
-            case 'mobile':
-            case 'mobile-landscape':
-                return `${basePath}?quality=75&w=600`;
-            default:
-                return source;
         }
     };
 

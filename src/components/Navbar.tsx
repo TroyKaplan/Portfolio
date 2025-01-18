@@ -1,13 +1,11 @@
 import React, { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
-import { ThemeContext } from '../context/ThemeContext';
 import './Navbar.css';
 import { AuthContext } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 const Navbar: React.FC = () => {
-    const { theme, toggleTheme } = useContext(ThemeContext);
     const { user, setUser } = useContext(AuthContext);
 
     const handleLogout = async () => {
@@ -42,9 +40,6 @@ const Navbar: React.FC = () => {
                 <NavLink to="/tutorials" className={({ isActive }) => (isActive ? 'active' : '')}>
                     Tutorials
                 </NavLink>
-                <button className="theme-toggle-button" onClick={toggleTheme} aria-label="Toggle Theme">
-                    {theme === 'light' ? '🌙' : '☀️'}
-                </button>
             </div>
             <div className="nav-right">
                 {user ? (
