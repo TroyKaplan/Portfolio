@@ -40,7 +40,7 @@ const galleryItems: GalleryItem[] = [
             { 
                 type: 'video',
                 source: `${process.env.PUBLIC_URL}/assets/videos/POQuickShowcase.mp4`,
-                description: 'Quick showcase of the game and rocket launcher, destrustion',
+                description: 'Quick showcase of the game and rocket launcher, destruction',
                 thumbnail: `${process.env.PUBLIC_URL}/assets/images/PORocketLauncher.png`,
             },
             {

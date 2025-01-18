@@ -3,7 +3,6 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { login } from '../services/auth';
 import ErrorMessage from './shared/ErrorMessage';
-import { AuthError } from '../types/auth';
 import './Login.css';
 
 const Login: React.FC = () => {

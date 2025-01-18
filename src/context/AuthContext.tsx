@@ -1,7 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { getCurrentUser } from '../services/auth';
 import axios from 'axios';
-import { AuthError } from '../types/auth';
 import { userService } from '../services/api';
 
 interface User {
