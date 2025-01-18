@@ -8,7 +8,7 @@ const CheckoutForm: React.FC = () => {
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
 
   const cardElementOptions = {
     style: {

@@ -9,14 +9,14 @@ const HomePage: React.FC = () => {
                 <h1>Welcome to My Portfolio</h1>
                 <p>
                     Hi! I'm Troy Kaplan, a passionate game developer and designer. Explore my games,
-                    check out my resume, and view my gallery of work.
+                    and view my gallery of work.
                 </p>
             </section>
 
             <section className="navigation-links">
                 <Link to="/games" className="nav-link">
                     <h2>Games</h2>
-                    <p>Play browser based games I've created!</p>
+                    <p>Play both Single Player and Multiplayer games in your browser!</p>
                 </Link>
                 {/*<Link to="/resume" className="nav-link">
                     <h2>Resume</h2>
