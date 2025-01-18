@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import ErrorMessage from './shared/ErrorMessage';
 
 interface ProfileActionsProps {
   email: string | null;
@@ -13,7 +14,7 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({ email, onEmailUpdate })
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string } | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   const validateEmail = (email: string): boolean => {
@@ -24,7 +25,7 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({ email, onEmailUpdate })
   const handleEmailUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateEmail(newEmail)) {
-      setError('Please enter a valid email address');
+      setError({ message: 'Please enter a valid email address' });
       return;
     }
     try {
@@ -37,12 +38,11 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({ email, onEmailUpdate })
       setError(null);
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.message || 'Failed to update email';
-        setError(errorMessage);
+        setError({ message: error.response?.data?.message || 'Failed to update email' });
       } else if (error instanceof Error) {
-        setError(error.message);
+        setError({ message: error.message });
       } else {
-        setError('An unexpected error occurred');
+        setError({ message: 'An unexpected error occurred' });
       }
     }
   };
@@ -50,7 +50,7 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({ email, onEmailUpdate })
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
+      setError({ message: 'Passwords do not match' });
       return;
     }
     try {
@@ -68,19 +68,18 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({ email, onEmailUpdate })
       setConfirmPassword('');
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.message || 'Failed to change password';
-        setError(errorMessage);
+        setError({ message: error.response?.data?.message || 'Failed to change password' });
       } else if (error instanceof Error) {
-        setError(error.message);
+        setError({ message: error.message });
       } else {
-        setError('An unexpected error occurred');
+        setError({ message: 'An unexpected error occurred' });
       }
     }
   };
 
   return (
     <div className="profile-actions">
-      {error && <div className="error-message">{error}</div>}
+      {error && <ErrorMessage error={error} onClose={() => setError(null)} />}
       {success && <div className="success-message">{success}</div>}
 
       {!email && !showEmailForm && (
