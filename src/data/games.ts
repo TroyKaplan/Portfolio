@@ -30,7 +30,7 @@ const multiplayerGames: Game[] = [
         description: 'Fly some rockets around. Work in progress',
         thumbnail: `${process.env.PUBLIC_URL}/assets/images/rocketgame-thumbnail.png`,
         path: `${process.env.PUBLIC_URL}/assets/games/rocket-game-html5/index.html`,
-        instructions: 'Use A and D keys to rotate. Press W to fly forward. Press space to shoot. Zoom with I/O or mouse wheel. F11 for fullscreen. ESC to get out of fullscreen.',
+        instructions: 'Use A and D keys to rotate. Press W to fly forward. Press Space/Left click to shoot. Zoom with I/O or mouse wheel. F11 for fullscreen. ESC to get out of fullscreen.',
         isMultiplayer: true,
         serverType: 'rocketGame',
         access: 'public', // when set to subscriber the game will still be available for registered users
