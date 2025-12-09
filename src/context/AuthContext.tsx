@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { getCurrentUser } from '../services/auth';
+import { getCurrentUser } from '../features/auth/api';
 import axios from 'axios';
 import { userService } from '../services/api';
 

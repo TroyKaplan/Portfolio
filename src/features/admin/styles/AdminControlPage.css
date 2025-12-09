@@ -1,0 +1,21 @@
+.admin-control {
+  padding: 20px;
+}
+
+.admin-control h1 {
+  margin-bottom: 16px;
+}
+
+.admin-control button {
+  padding: 10px 16px;
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.admin-control button:hover {
+  background: var(--primary-color-dark);
+}
+

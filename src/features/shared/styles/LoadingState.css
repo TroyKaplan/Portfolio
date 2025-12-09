@@ -1,0 +1,9 @@
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 120px;
+  color: var(--text-color);
+  font-size: 1rem;
+}
+

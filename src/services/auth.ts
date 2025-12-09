@@ -1,5 +1,6 @@
-import axios from 'axios';
+import apiClient from '../core/api/client';
 import { User, AuthError, DeviceInfo } from '../types/auth';
+import axios from 'axios';
 
 const createAuthError = (error: any): AuthError => {
   if (axios.isAxiosError(error)) {
@@ -18,9 +19,7 @@ const createAuthError = (error: any): AuthError => {
 
 export const getCurrentUser = async (): Promise<{ user: User }> => {
   try {
-    const response = await axios.get('/api/auth/current-user', {
-      withCredentials: true
-    });
+    const response = await apiClient.get('/api/auth/current-user');
     return response.data;
   } catch (error: any) {
     throw createAuthError(error);
@@ -33,10 +32,7 @@ export const login = async (
   deviceInfo: DeviceInfo
 ): Promise<{ user: User }> => {
   try {
-    const response = await axios.post('/api/auth/login', 
-      { username, password, deviceInfo },
-      { withCredentials: true }
-    );
+    const response = await apiClient.post('/api/auth/login', { username, password, deviceInfo });
     return response.data;
   } catch (error: any) {
     throw createAuthError(error);

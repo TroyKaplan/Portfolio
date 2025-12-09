@@ -1,33 +1,15 @@
-import axios from 'axios';
-
-const api = axios.create({
-  withCredentials: true,
-  headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json'
-  }
-});
-
-export const trackGameClick = async (gameId: string) => {
-  try {
-    console.log('Sending game click track request:', gameId); // Debug log
-    await api.post('/api/track-game-click', { gameId });
-    console.log('Successfully tracked game click'); // Debug log
-  } catch (error) {
-    console.error('Failed to track game click:', error);
-  }
-};
+import apiClient from '../core/api/client';
 
 export const userService = {
-  getCurrentUser: () => api.get('/api/auth/current-user'),
-  getActiveUsers: () => api.get('/api/active-users'),
-  getVisitorStats: () => api.get('/api/visitor-stats'),
+  getCurrentUser: () => apiClient.get('/api/auth/current-user'),
+  getActiveUsers: () => apiClient.get('/api/active-users'),
+  getVisitorStats: () => apiClient.get('/api/visitor-stats'),
   updateRole: (userId: string, role: string) => 
-    api.post('/api/update-role', { userId, role }),
+    apiClient.post('/api/update-role', { userId, role }),
   sendHeartbeat: (data: { currentPage: string }) => 
-    api.post('/api/auth/heartbeat', data),
+    apiClient.post('/api/auth/heartbeat', data),
   sendAnonymousHeartbeat: (data: { currentPage: string }) => 
-    api.post('/api/anonymous-heartbeat', data),
+    apiClient.post('/api/anonymous-heartbeat', data),
   deleteUser: (userId: string) => 
-    api.delete(`/api/users/${userId}`)
+    apiClient.delete(`/api/users/${userId}`)
 }; 

@@ -1,0 +1,30 @@
+.footer {
+    background-color: var(--footer-background-color);
+    color: var(--footer-text-color);
+    padding: 1rem 0;
+    width: 100%;
+}
+
+.footer-content {
+    text-align: center;
+}
+
+.footer-content p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.social-links {
+    margin-top: 0.5rem;
+}
+
+.social-links a {
+    margin: 0 0.5rem;
+    text-decoration: none;
+    color: var(--link-color);
+}
+
+.social-links a:hover {
+    text-decoration: underline;
+}
+

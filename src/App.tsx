@@ -1,64 +1,71 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import HomePage from './pages/HomePage';
-import GamesPage from './pages/GamesPage';
-import GalleryPage from './pages/GalleryPage';
-import TutorialsPage from './pages/TutorialsPage';
+import HomePage from './features/home/pages/HomePage';
+import GamesPage from './features/games/pages/GamesPage';
+import GalleryPage from './features/gallery/pages/GalleryPage';
+import TutorialsPage from './features/tutorials/pages/TutorialsPage';
 import './App.css';
 import PrivateRoute from './PrivateRoute';
-import SubscriptionPage from './pages/SubscriptionPage';
-import AdminDashboard from './pages/AdminDashboard';
-import Login from './components/Login';
-import Register from './components/Register';
-import UserProfile from './pages/UserProfile';
-import UserDetails from './pages/UserDetails';
-import ErrorBoundary from './components/ErrorBoundary';
+import SubscriptionPage from './features/subscription/pages/SubscriptionPage';
+import AdminDashboard from './features/admin/pages/AdminDashboard';
+import Login from './features/auth/pages/Login';
+import Register from './features/auth/pages/Register';
+import AdminControlPage from './features/admin/pages/AdminControlPage';
+import UserProfile from './features/profile/pages/UserProfile';
+import UserDetails from './features/admin/pages/UserDetails';
+import ErrorBoundary from './features/layout/components/ErrorBoundary';
 import { AuthProvider } from './context/AuthContext';
+import MainLayout from './features/layout/components/MainLayout';
 
 function App() {
     return (
         <AuthProvider>
-                <Router>
-                    <div className="app-container">
-                        <Navbar />
-                        <div className="content-wrapper">
-                            <Routes>
-                                <Route path="/" element={<HomePage />} />
-                                <Route path="/login" element={<Login />} />
-                                <Route path="/register" element={<Register />} />
-                                <Route path="/games" element={<GamesPage />} />
-                                <Route path="/Gallery" element={<GalleryPage />} />
-                                <Route path="/Tutorials" element={<TutorialsPage />} />
-                                <Route
-                                    path="/admin"
-                                    element={
-                                        <PrivateRoute role="admin">
-                                            <AdminDashboard />
-                                        </PrivateRoute>
-                                    }
-                                />
-                                <Route 
-                                    path="/profile" 
-                                    element={
-                                        <PrivateRoute>
-                                            <ErrorBoundary>
-                                                <UserProfile />
-                                            </ErrorBoundary>
-                                        </PrivateRoute>
-                                    } 
-                                />
-                                <Route path="/subscribe" element={<SubscriptionPage />} />
-                                <Route path="/admin/users/:userId" element={
-                                    <PrivateRoute role="admin">
-                                        <UserDetails />
-                                    </PrivateRoute>
-                                } />
-                            </Routes>
-                        </div>
-                        <Footer />
-                    </div>
-                </Router>
+            <Router>
+                <Routes>
+                    <Route element={<MainLayout />}>
+                        <Route index element={<HomePage />} />
+                        <Route path="/games" element={<GamesPage />} />
+                        <Route path="/gallery" element={<GalleryPage />} />
+                        <Route path="/tutorials" element={<TutorialsPage />} />
+                        <Route path="/subscribe" element={<SubscriptionPage />} />
+
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+
+                        <Route
+                            path="/admin"
+                            element={
+                                <PrivateRoute role="admin">
+                                    <AdminDashboard />
+                                </PrivateRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/control"
+                            element={
+                                <PrivateRoute role="admin">
+                                    <AdminControlPage />
+                                </PrivateRoute>
+                            }
+                        />
+                        <Route path="/admin/users/:userId" element={
+                            <PrivateRoute role="admin">
+                                <UserDetails />
+                            </PrivateRoute>
+                        } />
+
+                        <Route 
+                            path="/profile" 
+                            element={
+                                <PrivateRoute>
+                                    <ErrorBoundary>
+                                        <UserProfile />
+                                    </ErrorBoundary>
+                                </PrivateRoute>
+                            } 
+                        />
+                    </Route>
+                </Routes>
+            </Router>
         </AuthProvider>
     );
 }
